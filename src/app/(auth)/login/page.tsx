@@ -48,7 +48,7 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password" name="password" className="text-slate-300">Wachtwoord</Label>
+                <Label htmlFor="password" className="text-slate-300">Wachtwoord</Label>
               </div>
               <Input id="password" name="password" type="password" required className="bg-slate-900/50 border-slate-700 text-white" />
             </div>
