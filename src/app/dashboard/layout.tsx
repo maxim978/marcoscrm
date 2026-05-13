@@ -19,17 +19,19 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-slate-50">
       {/* Mobile Header */}
-      <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 className="text-xl font-bold tracking-tight">Marcos CRM</h1>
+      <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 h-16">
+        <div className="flex items-center">
+          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-8 w-auto brightness-200 contrast-125" />
+        </div>
         <MobileNav user={user} />
       </div>
 
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-slate-900 text-white flex-col flex-shrink-0 sticky top-0 h-screen">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold tracking-tight">Marcos CRM</h1>
+        <div className="p-6 flex justify-center border-b border-slate-800">
+          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-12 w-auto brightness-200 contrast-125" />
         </div>
-        <nav className="flex flex-col gap-2 p-4">
+        <nav className="flex flex-col gap-2 p-4 mt-2">
           <NavLinks />
         </nav>
         <div className="mt-auto p-4 border-t border-slate-800">

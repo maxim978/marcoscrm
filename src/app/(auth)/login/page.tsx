@@ -26,47 +26,55 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your email below to login to your account.</CardDescription>
+    <div className="flex min-h-screen items-center justify-center p-4 bg-slate-900">
+      <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600 blur-[120px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-yellow-600 blur-[120px]" />
+      </div>
+      
+      <Card className="w-full max-w-sm relative z-10 border-slate-800 bg-slate-950/50 backdrop-blur-xl text-white shadow-2xl">
+        <CardHeader className="text-center pb-2">
+          <div className="flex justify-center mb-6">
+            <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-16 w-auto brightness-200" />
+          </div>
+          <CardTitle className="text-2xl font-bold tracking-tight text-white">Artist Release CRM</CardTitle>
+          <CardDescription className="text-slate-400">Log in op je persoonlijke dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
           <form id="login-form" action={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="m@example.com" required />
+              <Label htmlFor="email" className="text-slate-300">Email</Label>
+              <Input id="email" name="email" type="email" placeholder="naam@domein.nl" required className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-600" />
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" name="password" className="text-slate-300">Wachtwoord</Label>
               </div>
-              <Input id="password" name="password" type="password" required />
+              <Input id="password" name="password" type="password" required className="bg-slate-900/50 border-slate-700 text-white" />
             </div>
             
             {error && (
-              <div className="bg-red-50 text-red-500 text-sm p-3 rounded-md border border-red-100">
+              <div className="bg-red-500/10 text-red-400 text-sm p-3 rounded-md border border-red-500/20">
                 {error}
               </div>
             )}
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-4">
-          <Button form="login-form" type="submit" className="w-full" disabled={isLoading}>
+          <Button form="login-form" type="submit" className="w-full bg-[#3071d8] hover:bg-[#3071d8]/90 text-white font-bold" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Logging in...
+                Laden...
               </>
             ) : (
-              'Login'
+              'Inloggen'
             )}
           </Button>
-          <div className="text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="underline">
-              Sign up
+          <div className="text-center text-sm text-slate-400">
+            Nog geen account?{' '}
+            <Link href="/register" className="text-[#dfb433] hover:underline font-medium">
+              Registreren
             </Link>
           </div>
         </CardFooter>
