@@ -13,6 +13,7 @@ import { Plus, ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
 import { CsvImport } from '@/components/targets/CsvImport'
 import { ScreenshotImport } from '@/components/targets/ScreenshotImport'
+import { ContactCard } from '@/components/targets/ContactCard'
 
 export default async function TargetsPage(props: { searchParams: Promise<{ sort?: string }> }) {
   const searchParams = await props.searchParams
@@ -82,11 +83,9 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
                 <TableRow key={target.id}>
                   <TableCell>
                     <div className="font-medium">{target.name}</div>
-                    {target.contact_name && (
-                      <div className="text-xs text-slate-500 mt-1">
-                        Beheerd door: <span className="font-medium text-slate-700">{target.contact_name}</span>
-                      </div>
-                    )}
+                    <div className="text-xs text-slate-500 mt-1">
+                      Beheerd door: <ContactCard target={target} />
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{target.type}</Badge>
@@ -118,3 +117,4 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
     </div>
   )
 }
+

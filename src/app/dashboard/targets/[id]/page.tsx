@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { addSupportEvent } from '@/app/actions/support'
-import { Mail, Globe, Hash, Calendar, Plus, Link as LinkIcon } from 'lucide-react'
 import { SubmitButton } from '@/components/ui/SubmitButton'
+import { ContactCard } from '@/components/targets/ContactCard'
+import { Mail, Globe, Hash, Calendar, Plus, Link as LinkIcon, Phone, Instagram, Facebook, Video, Edit2, User } from 'lucide-react'
 
 export default async function TargetDetailPage({ params }: { params: { id: string } }) {
   async function addSupportEventAction(formData: FormData) {
@@ -62,21 +63,69 @@ export default async function TargetDetailPage({ params }: { params: { id: strin
         <div className="md:col-span-1 space-y-6">
           {/* Target Info */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Contact Info</CardTitle>
+              <ContactCard 
+                target={target} 
+                trigger={
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                }
+              />
             </CardHeader>
             <CardContent className="space-y-4">
+              {target.contact_name && (
+                <div className="flex items-center gap-3 text-sm font-medium">
+                  <User className="h-4 w-4 text-slate-400" />
+                  <span>{target.contact_name}</span>
+                </div>
+              )}
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-slate-500" />
                 <span>{target.email || 'No email provided'}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Globe className="h-4 w-4 text-slate-500" />
-                <span>{target.social_links?.spotify || target.social_links?.instagram || 'No links provided'}</span>
+              {target.phone && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Phone className="h-4 w-4 text-slate-500" />
+                  <span>{target.phone}</span>
+                </div>
+              )}
+              
+              <div className="pt-2 flex flex-wrap gap-2">
+                {target.instagram_url && (
+                  <Button asChild variant="outline" size="sm" className="h-8">
+                    <a href={target.instagram_url} target="_blank" rel="noreferrer">
+                      <Instagram className="h-4 w-4 mr-2 text-pink-500" /> Instagram
+                    </a>
+                  </Button>
+                )}
+                {target.facebook_url && (
+                  <Button asChild variant="outline" size="sm" className="h-8">
+                    <a href={target.facebook_url} target="_blank" rel="noreferrer">
+                      <Facebook className="h-4 w-4 mr-2 text-blue-600" /> Facebook
+                    </a>
+                  </Button>
+                )}
+                {target.tiktok_url && (
+                  <Button asChild variant="outline" size="sm" className="h-8">
+                    <a href={target.tiktok_url} target="_blank" rel="noreferrer">
+                      <Video className="h-4 w-4 mr-2 text-slate-900" /> TikTok
+                    </a>
+                  </Button>
+                )}
+                {target.social_links?.spotify && (
+                  <Button asChild variant="outline" size="sm" className="h-8">
+                    <a href={target.social_links.spotify} target="_blank" rel="noreferrer">
+                      <Globe className="h-4 w-4 mr-2 text-green-500" /> Spotify
+                    </a>
+                  </Button>
+                )}
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Hash className="h-4 w-4 text-slate-500" />
-                <span>Followers: {target.followers || 'Unknown'}</span>
+
+              <div className="flex items-center gap-3 text-sm text-slate-500">
+                <Hash className="h-4 w-4" />
+                <span>Followers: {target.followers?.toLocaleString() || 'Unknown'}</span>
               </div>
               
               <div className="pt-4 border-t border-slate-100">
@@ -85,6 +134,7 @@ export default async function TargetDetailPage({ params }: { params: { id: strin
               </div>
             </CardContent>
           </Card>
+
 
           {/* Add Support Event Form */}
           <Card>
