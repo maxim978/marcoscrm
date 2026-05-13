@@ -16,8 +16,6 @@ export default async function NewInfluencerPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return
-
     const rawData = {
       user_id: user.id,
       name: formData.get('name'),
@@ -28,6 +26,11 @@ export default async function NewInfluencerPage() {
       followers: parseInt(formData.get('followers') as string) || 0,
       relationship_status: formData.get('relationship_status'),
       notes: formData.get('notes'),
+      social_links: {
+        instagram: formData.get('instagram'),
+        tiktok: formData.get('tiktok'),
+        facebook: formData.get('facebook'),
+      }
     }
 
     const { error } = await supabase.from('influencers').insert([rawData])
@@ -111,6 +114,24 @@ export default async function NewInfluencerPage() {
                   <SelectItem value="prioriteit">Prioriteit</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-4 border-t border-slate-100 pt-6">
+              <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">Social Media Links</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="instagram" className="font-bold text-slate-700">Instagram URL</Label>
+                  <Input id="instagram" name="instagram" placeholder="https://instagram.com/..." className="h-12 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tiktok" className="font-bold text-slate-700">TikTok URL</Label>
+                  <Input id="tiktok" name="tiktok" placeholder="https://tiktok.com/@..." className="h-12 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="facebook" className="font-bold text-slate-700">Facebook URL</Label>
+                  <Input id="facebook" name="facebook" placeholder="https://facebook.com/..." className="h-12 rounded-xl" />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
