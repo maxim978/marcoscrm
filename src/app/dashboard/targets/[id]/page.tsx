@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { addSupportEvent } from '@/app/actions/support'
 import { SubmitButton } from '@/components/ui/SubmitButton'
 import { ContactCard } from '@/components/targets/ContactCard'
-import { Mail, Globe, Hash, Calendar, Plus, Link as LinkIcon, Phone, Instagram, Facebook, Video, Edit2, User } from 'lucide-react'
+import { Mail, Globe, Hash, Calendar, Plus, Link as LinkIcon, Phone, Video, Edit2, User } from 'lucide-react'
 
 export default async function TargetDetailPage({ params }: { params: { id: string } }) {
   async function addSupportEventAction(formData: FormData) {
@@ -96,14 +96,14 @@ export default async function TargetDetailPage({ params }: { params: { id: strin
                 {target.instagram_url && (
                   <Button asChild variant="outline" size="sm" className="h-8">
                     <a href={target.instagram_url} target="_blank" rel="noreferrer">
-                      <Instagram className="h-4 w-4 mr-2 text-pink-500" /> Instagram
+                      <Globe className="h-4 w-4 mr-2 text-pink-500" /> Instagram
                     </a>
                   </Button>
                 )}
                 {target.facebook_url && (
                   <Button asChild variant="outline" size="sm" className="h-8">
                     <a href={target.facebook_url} target="_blank" rel="noreferrer">
-                      <Facebook className="h-4 w-4 mr-2 text-blue-600" /> Facebook
+                      <LinkIcon className="h-4 w-4 mr-2 text-blue-600" /> Facebook
                     </a>
                   </Button>
                 )}

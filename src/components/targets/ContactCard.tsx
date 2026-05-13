@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/ui/SubmitButton'
 import { updateTargetContactInfo } from '@/app/actions/contact'
-import { Mail, Phone, Instagram, Facebook, Video, User } from 'lucide-react'
+import { Mail, Phone, Video, User, Link as LinkIcon, Globe } from 'lucide-react'
 import { toast } from 'sonner' // Assuming sonner is used, if not I'll use alert
 
 interface ContactCardProps {
@@ -80,14 +80,14 @@ export function ContactCard({ target, trigger }: ContactCardProps) {
           <div className="grid grid-cols-1 gap-4 border-t pt-4">
             <div className="space-y-2">
               <Label htmlFor="instagram_url" className="flex items-center gap-2">
-                <Instagram className="h-4 w-4 text-pink-500" /> Instagram Link
+                <Globe className="h-4 w-4 text-pink-500" /> Instagram Link
               </Label>
               <Input id="instagram_url" name="instagram_url" defaultValue={target.instagram_url || ''} placeholder="https://instagram.com/..." />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="facebook_url" className="flex items-center gap-2">
-                <Facebook className="h-4 w-4 text-blue-600" /> Facebook Link
+                <LinkIcon className="h-4 w-4 text-blue-600" /> Facebook Link
               </Label>
               <Input id="facebook_url" name="facebook_url" defaultValue={target.facebook_url || ''} placeholder="https://facebook.com/..." />
             </div>

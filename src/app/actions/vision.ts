@@ -1,8 +1,7 @@
 'use server'
 
-export const runtime = 'edge'
-
 import OpenAI from 'openai'
+
 
 function getOpenAIClient() {
   if (!process.env.OPENAI_API_KEY) return null
