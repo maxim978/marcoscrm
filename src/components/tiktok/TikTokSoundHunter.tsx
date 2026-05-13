@@ -10,7 +10,8 @@ import { createTikTokSound, addTikTokVideoToSound, getTikTokSounds, addTikTokVid
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { ArrowUpDown, Edit, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowUpDown, Edit, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function TikTokSoundHunter() {
   const [sounds, setSounds] = useState<any[]>([])
@@ -235,7 +236,7 @@ export default function TikTokSoundHunter() {
 }
 
 function TikTokVideoList({ videos, onRefresh }: { videos: any[], onRefresh: () => void }) {
-  const [sortField, setSortField] = useState('views')
+  const [sortField, setSortField] = useState('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
   const [editingVideo, setEditingVideo] = useState<any>(null)
@@ -251,6 +252,12 @@ function TikTokVideoList({ videos, onRefresh }: { videos: any[], onRefresh: () =
       valB = (valB || '').toLowerCase()
       return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
     }
+
+    if (sortField === 'created_at') {
+      const dateA = new Date(valA || 0).getTime()
+      const dateB = new Date(valB || 0).getTime()
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+    }
     
     valA = valA || 0
     valB = valB || 0
@@ -260,13 +267,10 @@ function TikTokVideoList({ videos, onRefresh }: { videos: any[], onRefresh: () =
   const totalPages = Math.ceil(sortedVideos.length / itemsPerPage)
   const paginatedVideos = sortedVideos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  const toggleSort = (field: string) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortOrder('desc')
-    }
+  const handleSortChange = (value: string) => {
+    const [field, order] = value.split(':')
+    setSortField(field)
+    setSortOrder(order as 'asc' | 'desc')
     setCurrentPage(1)
   }
 
@@ -305,33 +309,27 @@ function TikTokVideoList({ videos, onRefresh }: { videos: any[], onRefresh: () =
 
   return (
     <div className="flex flex-col">
-      {/* Sorting Controls */}
-      <div className="bg-slate-50/50 p-4 border-b border-slate-100 flex flex-wrap gap-2 items-center justify-between">
-        <div className="flex gap-2">
-          {[
-            { id: 'views', label: 'Views', icon: Eye },
-            { id: 'likes', label: 'Likes', icon: Heart },
-            { id: 'followers', label: 'Volgers', icon: Users },
-            { id: 'account_name', label: 'Alfabet', icon: ArrowUpDown },
-          ].map((item) => (
-            <Button
-              key={item.id}
-              variant={sortField === item.id ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => toggleSort(item.id)}
-              className={`h-8 text-[11px] font-black uppercase tracking-wider rounded-full ${sortField === item.id ? 'bg-[#3071d8] text-white' : 'text-slate-500'}`}
-            >
-              <item.icon className="h-3 w-3 mr-1" />
-              {item.label}
-              {sortField === item.id && (
-                <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-              )}
-            </Button>
-          ))}
+      {/* Sorting Dropdown */}
+      <div className="bg-slate-50/50 p-4 border-b border-slate-100 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-slate-400" />
+          <Select onValueChange={handleSortChange} defaultValue="created_at:desc">
+            <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200 text-xs font-bold uppercase tracking-wider">
+              <SelectValue placeholder="Sorteren op" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at:desc">Nieuwste eerst</SelectItem>
+              <SelectItem value="views:desc">Meeste Views</SelectItem>
+              <SelectItem value="likes:desc">Meeste Likes</SelectItem>
+              <SelectItem value="followers:desc">Meeste Volgers</SelectItem>
+              <SelectItem value="account_name:asc">Alfabet (A-Z)</SelectItem>
+              <SelectItem value="views:asc">Minste Views</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         
-        <div className="text-[11px] font-bold text-slate-400">
-          Pagina {currentPage} van {totalPages || 1}
+        <div className="text-[11px] font-bold text-slate-400 whitespace-nowrap">
+          {currentPage} / {totalPages || 1}
         </div>
       </div>
 
