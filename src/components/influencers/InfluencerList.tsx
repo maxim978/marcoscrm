@@ -37,6 +37,11 @@ export function InfluencerList({ initialInfluencers }: { initialInfluencers: any
   const [editingInf, setEditingInf] = useState<any>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
+  // Sync state with props when server-side sorting happens
+  useEffect(() => {
+    setInfluencers(initialInfluencers)
+  }, [initialInfluencers])
+
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je deze influencer wilt verwijderen?')) return
     const res = await deleteInfluencer(id)
