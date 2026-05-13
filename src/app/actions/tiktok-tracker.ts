@@ -22,35 +22,56 @@ export async function createTikTokSound(name: string) {
 export async function addTikTokVideoToSound(soundId: string, videoUrl: string) {
   const supabase = await createClient()
   
-  // Basic URL cleanup
   const cleanUrl = videoUrl.split('?')[0]
 
   try {
-    // 1. Fetch TikTok page to extract data
-    // Note: TikTok blocks simple fetch often. In a production app, we'd use a proxy or scraper service.
-    // For now, we'll try to extract what we can or use a fallback.
-    const response = await fetch(cleanUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    })
+    // 1. Try oEmbed first (Official and less likely to be blocked for basic info)
+    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(cleanUrl)}`
+    const oembedRes = await fetch(oembedUrl, { next: { revalidate: 0 } })
+    let oembedData: any = {}
     
-    const html = await response.text()
-    
-    // 2. Simple regex extraction (TikTok stores data in JSON in the HTML)
-    // This is fragile but works for a MVP without a paid scraper.
-    const accountMatch = html.match(/"uniqueId":"([^"]+)"/)
-    const likesMatch = html.match(/"diggCount":(\d+)/)
-    const viewsMatch = html.match(/"playCount":(\d+)/)
-    const followersMatch = html.match(/"followerCount":(\d+)/)
+    if (oembedRes.ok) {
+      oembedData = await oembedRes.json()
+    }
 
-    const videoData = {
+    // 2. Try to fetch the page for deep stats with a timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
+
+    let videoData = {
       sound_id: soundId,
       url: cleanUrl,
-      account_name: accountMatch ? accountMatch[1] : 'Unknown',
-      likes: likesMatch ? parseInt(likesMatch[1]) : 0,
-      views: viewsMatch ? parseInt(viewsMatch[1]) : 0,
-      followers: followersMatch ? parseInt(followersMatch[1]) : 0
+      account_name: oembedData.author_name || 'Unknown',
+      likes: 0,
+      views: 0,
+      followers: 0
+    }
+
+    try {
+      const response = await fetch(cleanUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        signal: controller.signal
+      })
+      
+      const html = await response.text()
+      clearTimeout(timeoutId)
+      
+      // Extraction regexes
+      const accountMatch = html.match(/"uniqueId":"([^"]+)"/)
+      const likesMatch = html.match(/"diggCount":(\d+)/)
+      const viewsMatch = html.match(/"playCount":(\d+)/)
+      const followersMatch = html.match(/"followerCount":(\d+)/)
+
+      if (accountMatch) videoData.account_name = accountMatch[1]
+      if (likesMatch) videoData.likes = parseInt(likesMatch[1])
+      if (viewsMatch) videoData.views = parseInt(viewsMatch[1])
+      if (followersMatch) videoData.followers = parseInt(followersMatch[1])
+    } catch (e) {
+      console.warn('Deep stats fetch failed, falling back to oEmbed info only', e)
     }
 
     const { error } = await supabase
@@ -62,7 +83,7 @@ export async function addTikTokVideoToSound(soundId: string, videoUrl: string) {
     revalidatePath('/dashboard/tiktok')
     return { success: true }
   } catch (error: any) {
-    return { error: 'Kon data niet ophalen: ' + error.message }
+    return { error: 'Kon data niet ophalen. Is de link correct? ' + error.message }
   }
 }
 
