@@ -69,6 +69,13 @@ export function ContactCard({ target, trigger }: ContactCardProps) {
         <form action={handleSubmit} className="space-y-4 pt-4">
           <input type="hidden" name="id" value={target.id} />
           
+          <div className="space-y-2 pb-2 border-b">
+            <Label htmlFor="spotify_url" className="flex items-center gap-2 font-bold text-green-600">
+              <Globe className="h-4 w-4" /> Spotify Playlist Link
+            </Label>
+            <Input id="spotify_url" name="spotify_url" defaultValue={target.social_links?.spotify || ''} placeholder="https://open.spotify.com/playlist/..." />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="contact_name">Naam beheerder</Label>
             <Input id="contact_name" name="contact_name" defaultValue={target.contact_name || ''} placeholder="Bijv. Mark de Vries" />

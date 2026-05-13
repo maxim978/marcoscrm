@@ -72,7 +72,6 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Platform</TableHead>
-              <TableHead>Relationship</TableHead>
               <TableHead>Followers</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -91,11 +90,6 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
                     <Badge variant="secondary">{target.type}</Badge>
                   </TableCell>
                   <TableCell>{target.platform}</TableCell>
-                  <TableCell>
-                    <Badge variant={target.relationship_status === 'warm' ? 'default' : 'outline'}>
-                      {target.relationship_status}
-                    </Badge>
-                  </TableCell>
                   <TableCell>{target.followers?.toLocaleString() || '0'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
