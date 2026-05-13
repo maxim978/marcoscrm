@@ -19,19 +19,19 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-slate-50">
       {/* Mobile Header */}
-      <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 h-16">
+      <div className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-50 h-16">
         <div className="flex items-center">
-          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-8 w-auto brightness-200 contrast-125" />
+          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-8 w-auto" />
         </div>
         <MobileNav user={user} />
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 bg-slate-900 text-white flex-col flex-shrink-0 sticky top-0 h-screen">
-        <div className="p-6 flex justify-center border-b border-slate-800">
-          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-12 w-auto brightness-200 contrast-125" />
+      <aside className="hidden md:flex w-64 bg-[#3071d8] text-white flex-col flex-shrink-0 sticky top-0 h-screen shadow-xl">
+        <div className="p-6 flex justify-center bg-white border-b border-slate-100 mb-2">
+          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-10 w-auto" />
         </div>
-        <nav className="flex flex-col gap-2 p-4 mt-2">
+        <nav className="flex flex-col gap-1 p-4">
           <NavLinks />
         </nav>
         <div className="mt-auto p-4 border-t border-slate-800">
@@ -58,22 +58,22 @@ export default async function DashboardLayout({
 function NavLinks() {
   return (
     <>
-      <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+      <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Home className="h-5 w-5" /> Dashboard
       </Link>
-      <Link href="/dashboard/artists" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+      <Link href="/dashboard/artists" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Users className="h-5 w-5" /> Artists
       </Link>
-      <Link href="/dashboard/releases" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+      <Link href="/dashboard/releases" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Disc className="h-5 w-5" /> Releases
       </Link>
-      <Link href="/dashboard/targets" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+      <Link href="/dashboard/targets" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Users className="h-5 w-5" /> Targets
       </Link>
-      <Link href="/dashboard/spotify" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+      <Link href="/dashboard/spotify" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Search className="h-5 w-5" /> Spotify Finder
       </Link>
-      <Link href="/dashboard/tiktok" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+      <Link href="/dashboard/tiktok" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Video className="h-5 w-5" /> TikTok Hunter
       </Link>
     </>
@@ -83,8 +83,8 @@ function NavLinks() {
 function SignOutButton() {
   return (
     <form action={logout}>
-      <button type="submit" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left">
-        <LogOut className="h-5 w-5" /> Sign Out
+      <button type="submit" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-blue-100 hover:bg-white/10 hover:text-white transition-all text-left font-medium">
+        <LogOut className="h-5 w-5" /> Uitloggen
       </button>
     </form>
   )

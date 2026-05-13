@@ -32,10 +32,12 @@ export default function LoginPage() {
         <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-yellow-600 blur-[120px]" />
       </div>
       
-      <Card className="w-full max-w-sm relative z-10 border-slate-800 bg-slate-950/50 backdrop-blur-xl text-white shadow-2xl">
+      <Card className="w-full max-w-sm relative z-10 border-slate-800 bg-slate-950/50 backdrop-blur-xl text-white shadow-2xl overflow-hidden">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-6">
-            <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-16 w-auto brightness-200" />
+            <div className="bg-white p-4 rounded-xl shadow-inner">
+              <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-12 w-auto" />
+            </div>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-white">Artist Release CRM</CardTitle>
           <CardDescription className="text-slate-400">Log in op je persoonlijke dashboard.</CardDescription>
