@@ -66,21 +66,21 @@ export default function TikTokSoundHunter() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">TikTok Sound Tracker</h1>
-          <p className="text-slate-500">Beheer video's en statistieken per sound.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">TikTok Sound Tracker</h1>
+          <p className="text-slate-500 text-sm md:text-base">Beheer video's en statistieken per sound.</p>
         </div>
         
-        <form onSubmit={handleCreateSound} className="flex gap-2">
+        <form onSubmit={handleCreateSound} className="flex gap-2 w-full md:w-auto">
           <Input 
             placeholder="Nieuwe Sound Naam..." 
             value={newSoundName}
             onChange={(e) => setNewSoundName(e.target.value)}
-            className="w-64"
+            className="flex-1 md:w-64"
           />
           <Button type="submit">
-            <Plus className="h-4 w-4 mr-2" /> Sound Aanmaken
+            <Plus className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Sound Aanmaken</span>
           </Button>
         </form>
       </div>
@@ -88,22 +88,22 @@ export default function TikTokSoundHunter() {
       <div className="grid grid-cols-1 gap-6">
         {sounds.map((sound) => (
           <Card key={sound.id} className="overflow-hidden border-l-4 border-l-blue-500">
-            <CardHeader className="bg-slate-50/50">
-              <div className="flex justify-between items-center">
+            <CardHeader className="bg-slate-50/50 p-4 md:p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-3">
                   <div className="bg-blue-100 p-2 rounded-lg">
                     <Music className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <CardTitle>{sound.name}</CardTitle>
-                    <CardDescription>{sound.tiktok_videos?.length || 0} video's gevolgd</CardDescription>
+                    <CardTitle className="text-base md:text-lg">{sound.name}</CardTitle>
+                    <CardDescription className="text-xs md:text-sm">{sound.tiktok_videos?.length || 0} video's gevolgd</CardDescription>
                   </div>
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full md:w-auto">
                   <Input 
                     placeholder="Plak TikTok video link..." 
-                    className="w-80"
+                    className="flex-1 md:w-80 text-sm"
                     value={addingVideoTo === sound.id ? videoUrl : ''}
                     onChange={(e) => {
                       setAddingVideoTo(sound.id)
@@ -115,13 +115,15 @@ export default function TikTokSoundHunter() {
                     onClick={() => handleAddVideo(sound.id)} 
                     disabled={addingVideoTo === sound.id}
                     variant="secondary"
+                    size="sm"
+                    className="md:size-default"
                   >
                     {addingVideoTo === sound.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               {sound.tiktok_videos && sound.tiktok_videos.length > 0 ? (
                 <Table>
                   <TableHeader>

@@ -36,39 +36,39 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-bold tracking-tight">Targets</h3>
-          <p className="text-slate-500 text-sm">Manage your promotional contacts and database.</p>
+          <p className="text-slate-500 text-sm">Beheer je promotie-contacten en database.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <BulkSearchButton />
           <ScreenshotImport />
           <CsvImport />
-          <Button asChild>
+          <Button asChild className="flex-1 md:flex-none">
             <Link href="/dashboard/targets/new">
               <Plus className="mr-2 h-4 w-4" />
-              Add Target
+              <span className="md:inline">Target</span>
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm text-slate-500">Sort by:</span>
-        <Button asChild variant={sort === 'newest' ? 'secondary' : 'ghost'} size="sm">
-          <Link href="/dashboard/targets?sort=newest">Newest</Link>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-sm text-slate-500 w-full md:w-auto mb-1 md:mb-0">Sorteer op:</span>
+        <Button asChild variant={sort === 'newest' ? 'secondary' : 'ghost'} size="sm" className="flex-1 md:flex-none">
+          <Link href="/dashboard/targets?sort=newest">Nieuwste</Link>
         </Button>
-        <Button asChild variant={sort === 'alphabetical' ? 'secondary' : 'ghost'} size="sm">
+        <Button asChild variant={sort === 'alphabetical' ? 'secondary' : 'ghost'} size="sm" className="flex-1 md:flex-none">
           <Link href="/dashboard/targets?sort=alphabetical">A-Z</Link>
         </Button>
-        <Button asChild variant={sort === 'followers' ? 'secondary' : 'ghost'} size="sm">
-          <Link href="/dashboard/targets?sort=followers">Followers <ArrowUpDown className="ml-2 h-3 w-3" /></Link>
+        <Button asChild variant={sort === 'followers' ? 'secondary' : 'ghost'} size="sm" className="flex-1 md:flex-none">
+          <Link href="/dashboard/targets?sort=followers">Followers <ArrowUpDown className="ml-1 h-3 w-3" /></Link>
         </Button>
       </div>
 
-      <div className="rounded-md border bg-white">
-        <Table>
+      <div className="rounded-md border bg-white overflow-hidden">
+        <div className="overflow-x-auto">
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -118,6 +118,7 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   )
