@@ -1,169 +1,176 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Music, Search, Users, ExternalLink, Sparkles, Loader2, ArrowRight, Heart, MessageCircle, Bookmark, Plus } from 'lucide-react'
-import { huntTikTokSound, saveTikTokCreatorToCrm } from '@/app/actions/tiktok'
-import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Music, Plus, Loader2, ExternalLink, Heart, Eye, Users, Trash2 } from 'lucide-react'
+import { createTikTokSound, addTikTokVideoToSound, getTikTokSounds } from '@/app/actions/tiktok-tracker'
+import { Badge } from '@/components/ui/badge'
 
 export default function TikTokSoundHunter() {
-  const [query, setQuery] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [savingId, setSavingId] = useState<string | null>(null)
-  const [result, setResult] = useState<any>(null)
+  const [sounds, setSounds] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [newSoundName, setNewSoundName] = useState('')
+  const [addingVideoTo, setAddingVideoTo] = useState<string | null>(null)
+  const [videoUrl, setVideoUrl] = useState('')
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    if (!query) return
+  useEffect(() => {
+    fetchSounds()
+  }, [])
+
+  async function fetchSounds() {
     setLoading(true)
-    try {
-      const data = await huntTikTokSound(query)
-      setResult(data)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
+    const data = await getTikTokSounds()
+    setSounds(data)
+    setLoading(false)
+  }
+
+  async function handleCreateSound(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newSoundName) return
+    const res = await createTikTokSound(newSoundName)
+    if (res.success) {
+      setNewSoundName('')
+      fetchSounds()
     }
   }
 
-  async function handleSave(video: any, index: number) {
-    setSavingId(index.toString())
-    try {
-      const res = await saveTikTokCreatorToCrm(video)
-      if (res.success) {
-        alert(`${video.creator} toegevoegd aan CRM!`)
-      } else {
-        alert('Fout: ' + res.error)
-      }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setSavingId(null)
+  async function handleAddVideo(soundId: string) {
+    if (!videoUrl) return
+    setAddingVideoTo(soundId)
+    const res = await addTikTokVideoToSound(soundId, videoUrl)
+    if (res.success) {
+      setVideoUrl('')
+      fetchSounds()
+    } else {
+      alert(res.error)
     }
+    setAddingVideoTo(null)
+  }
+
+  if (loading && sounds.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">TikTok Sound Hunter <Badge className="bg-blue-500 ml-2">DEEP</Badge></h1>
-          <p className="text-slate-500">Ontdek exact wie jouw sound gebruikt en sla ze direct op.</p>
+          <h1 className="text-3xl font-bold tracking-tight">TikTok Sound Tracker</h1>
+          <p className="text-slate-500">Beheer video's en statistieken per sound.</p>
         </div>
+        
+        <form onSubmit={handleCreateSound} className="flex gap-2">
+          <Input 
+            placeholder="Nieuwe Sound Naam..." 
+            value={newSoundName}
+            onChange={(e) => setNewSoundName(e.target.value)}
+            className="w-64"
+          />
+          <Button type="submit">
+            <Plus className="h-4 w-4 mr-2" /> Sound Aanmaken
+          </Button>
+        </form>
       </div>
 
-      <Card className="border-2 border-blue-100">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Music className="h-5 w-5 text-blue-600" />
-            Sound Link of Naam
-          </CardTitle>
-          <CardDescription>
-            Plak een TikTok Sound URL of zoek op naam om alle video's en stats te vinden.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-              <Input 
-                placeholder="https://www.tiktok.com/music/..." 
-                className="pl-9"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              Deep Hunter Starten
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {result && !result.error && (
-        <div className="space-y-6">
-          <Card className="bg-slate-900 text-white border-none shadow-xl overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Sparkles className="h-24 w-24" />
-            </div>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-400 text-sm uppercase tracking-widest">
-                AI Analyse
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg leading-relaxed text-slate-100 italic">
-                "{result.analysis}"
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-500" />
-                  Gevonden Video's & Creators
-                </CardTitle>
-                {result.searchUrl && (
-                  <Button variant="ghost" size="sm" asChild className="text-blue-500">
-                    <a href={result.searchUrl} target="_blank" rel="noreferrer">
-                      Open op TikTok <ExternalLink className="ml-2 h-3 w-3" />
-                    </a>
+      <div className="grid grid-cols-1 gap-6">
+        {sounds.map((sound) => (
+          <Card key={sound.id} className="overflow-hidden border-l-4 border-l-blue-500">
+            <CardHeader className="bg-slate-50/50">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Music className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle>{sound.name}</CardTitle>
+                    <CardDescription>{sound.tiktok_videos?.length || 0} video's gevolgd</CardDescription>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Plak TikTok video link..." 
+                    className="w-80"
+                    value={addingVideoTo === sound.id ? videoUrl : ''}
+                    onChange={(e) => {
+                      setAddingVideoTo(sound.id)
+                      setVideoUrl(e.target.value)
+                    }}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddVideo(sound.id)}
+                  />
+                  <Button 
+                    onClick={() => handleAddVideo(sound.id)} 
+                    disabled={addingVideoTo === sound.id}
+                    variant="secondary"
+                  >
+                    {addingVideoTo === sound.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                   </Button>
-                )}
+                </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Creator</TableHead>
-                    <TableHead className="text-center"><Heart className="h-4 w-4 mx-auto" /></TableHead>
-                    <TableHead className="text-center"><MessageCircle className="h-4 w-4 mx-auto" /></TableHead>
-                    <TableHead className="text-center"><Bookmark className="h-4 w-4 mx-auto" /></TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result.videos?.map((v: any, i: number) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <div className="font-bold text-blue-600">@{v.creator}</div>
-                        <div className="text-[10px] text-slate-400">{v.followers?.toLocaleString()} followers</div>
-                      </TableCell>
-                      <TableCell className="text-center font-medium">{v.likes?.toLocaleString()}</TableCell>
-                      <TableCell className="text-center text-slate-500">{v.comments?.toLocaleString()}</TableCell>
-                      <TableCell className="text-center text-slate-500">{v.saves?.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+            <CardContent className="p-0">
+              {sound.tiktok_videos && sound.tiktok_videos.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="pl-6">Account</TableHead>
+                      <TableHead className="text-center">Views</TableHead>
+                      <TableHead className="text-center">Likes</TableHead>
+                      <TableHead className="text-center">Volgers</TableHead>
+                      <TableHead className="text-right pr-6">Link</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sound.tiktok_videos.map((video: any) => (
+                      <TableRow key={video.id}>
+                        <TableCell className="pl-6 font-bold text-blue-600">
+                          @{video.account_name}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Eye className="h-3 w-3 text-slate-400" />
+                            {video.views?.toLocaleString()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center font-medium">
+                          <div className="flex items-center justify-center gap-1">
+                            <Heart className="h-3 w-3 text-red-500" />
+                            {video.likes?.toLocaleString()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1 text-slate-500">
+                            <Users className="h-3 w-3" />
+                            {video.followers?.toLocaleString()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right pr-6">
                           <Button variant="ghost" size="sm" asChild>
-                            <a href={v.videoUrl} target="_blank" rel="noreferrer">
+                            <a href={video.url} target="_blank" rel="noreferrer">
                               <ExternalLink className="h-4 w-4" />
                             </a>
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="bg-green-50 text-green-700 border-green-100 hover:bg-green-100"
-                            onClick={() => handleSave(v, i)}
-                            disabled={savingId === i.toString()}
-                          >
-                            {savingId === i.toString() ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="p-8 text-center text-slate-400 italic">
+                  Nog geen video's toegevoegd voor deze sound. Plak hierboven een link om te beginnen.
+                </div>
+              )}
             </CardContent>
           </Card>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   )
 }
