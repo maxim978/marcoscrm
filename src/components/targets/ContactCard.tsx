@@ -20,6 +20,7 @@ interface ContactCardProps {
     facebook_url?: string | null
     instagram_url?: string | null
     tiktok_url?: string | null
+    social_links?: any
   }
   trigger?: React.ReactNode
 }
