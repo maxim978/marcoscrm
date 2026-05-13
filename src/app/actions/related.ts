@@ -6,11 +6,15 @@ export async function getRelatedPlaylists(contactName: string, currentTargetId: 
   if (!contactName) return []
   
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
   const { data, error } = await supabase
     .from('targets')
     .select('id, name, social_links')
-    .eq('contact_name', contactName)
-    .neq('id', currentTargetId) // Don't include the current one
+    .eq('user_id', user.id)
+    .ilike('contact_name', contactName.trim()) // Case-insensitive and trimmed
+    .neq('id', currentTargetId)
     .order('name', { ascending: true })
 
   if (error) {
