@@ -17,8 +17,6 @@ import {
   Globe, 
   Users, 
   ExternalLink,
-  Instagram,
-  Facebook,
   Video
 } from 'lucide-react'
 import { 
@@ -110,7 +108,7 @@ export function InfluencerList({ initialInfluencers }: { initialInfluencers: any
               <div className="flex gap-2">
                 {inf.social_links?.instagram && (
                   <a href={inf.social_links.instagram} target="_blank" rel="noreferrer" className="bg-pink-50 p-2 rounded-lg text-pink-600">
-                    <Instagram className="h-4 w-4" />
+                    <Globe className="h-4 w-4" />
                   </a>
                 )}
                 {inf.social_links?.tiktok && (
@@ -158,7 +156,7 @@ export function InfluencerList({ initialInfluencers }: { initialInfluencers: any
                     <div className="flex gap-1 mr-4 border-r border-slate-100 pr-4">
                       {inf.social_links?.instagram && (
                         <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-pink-50 text-pink-600">
-                          <a href={inf.social_links.instagram} target="_blank" rel="noreferrer"><Instagram className="h-4 w-4" /></a>
+                          <a href={inf.social_links.instagram} target="_blank" rel="noreferrer"><Globe className="h-4 w-4" /></a>
                         </Button>
                       )}
                       {inf.social_links?.tiktok && (
