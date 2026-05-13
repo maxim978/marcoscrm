@@ -346,6 +346,9 @@ function TikTokVideoList({ videos, onRefresh }: { videos: any[], onRefresh: () =
                 }}>
                   <Edit className="h-4 w-4" />
                 </Button>
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-slate-300 hover:text-red-500" onClick={() => handleDelete(video.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
                 <a href={video.url} target="_blank" rel="noreferrer" className="bg-[#3071d8]/10 p-2 rounded-lg text-[#3071d8]">
                   <ExternalLink className="h-5 w-5" />
                 </a>
