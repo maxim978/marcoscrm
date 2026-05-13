@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Plus, Filter } from 'lucide-react'
 import Link from 'next/link'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { InfluencerSort } from '@/components/influencers/InfluencerSort'
 import { InfluencerList } from '@/components/influencers/InfluencerList'
 
 export default async function InfluencersPage(props: { searchParams: Promise<{ sort?: string }> }) {
@@ -50,22 +50,7 @@ export default async function InfluencersPage(props: { searchParams: Promise<{ s
         </div>
         
         <div className="w-full md:w-64">
-          <Select defaultValue={sort}>
-            <SelectTrigger className="w-full h-11 bg-white border-slate-200 font-bold">
-              <SelectValue placeholder="Kies sortering" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">
-                <Link href="/dashboard/influencers?sort=newest" className="w-full h-full block">Nieuwste eerst</Link>
-              </SelectItem>
-              <SelectItem value="alphabetical">
-                <Link href="/dashboard/influencers?sort=alphabetical" className="w-full h-full block">Alfabet (A-Z)</Link>
-              </SelectItem>
-              <SelectItem value="followers">
-                <Link href="/dashboard/influencers?sort=followers" className="w-full h-full block">Meeste Volgers</Link>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <InfluencerSort currentSort={sort} />
         </div>
       </div>
 
