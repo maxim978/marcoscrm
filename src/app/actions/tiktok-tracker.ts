@@ -21,26 +21,38 @@ export async function createTikTokSound(name: string) {
 
 export async function addTikTokVideoToSound(soundId: string, videoUrl: string) {
   const supabase = await createClient()
-  
   const cleanUrl = videoUrl.split('?')[0]
 
+  console.log('Processing TikTok URL:', cleanUrl)
+
   try {
-    // 1. Try oEmbed first (Official and less likely to be blocked for basic info)
-    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(cleanUrl)}`
+    // 1. Handle mobile redirects (vm.tiktok.com)
+    let finalUrl = cleanUrl
+    if (cleanUrl.includes('vm.tiktok.com') || cleanUrl.includes('vt.tiktok.com')) {
+      const res = await fetch(cleanUrl, { method: 'HEAD', redirect: 'follow' })
+      finalUrl = res.url.split('?')[0]
+      console.log('Redirected to final URL:', finalUrl)
+    }
+
+    // 2. Try oEmbed for basic info
+    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(finalUrl)}`
     const oembedRes = await fetch(oembedUrl, { next: { revalidate: 0 } })
     let oembedData: any = {}
     
     if (oembedRes.ok) {
       oembedData = await oembedRes.json()
+      console.log('oEmbed data received:', oembedData.author_name)
+    } else {
+      console.warn('oEmbed failed with status:', oembedRes.status)
     }
 
-    // 2. Try to fetch the page for deep stats with a timeout
+    // 3. Fetch page for deep stats
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
 
     let videoData = {
       sound_id: soundId,
-      url: cleanUrl,
+      url: finalUrl,
       account_name: oembedData.author_name || 'Unknown',
       likes: 0,
       views: 0,
@@ -48,11 +60,9 @@ export async function addTikTokVideoToSound(soundId: string, videoUrl: string) {
     }
 
     try {
-      const response = await fetch(cleanUrl, {
+      const response = await fetch(finalUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
         },
         signal: controller.signal
       })
@@ -60,7 +70,6 @@ export async function addTikTokVideoToSound(soundId: string, videoUrl: string) {
       const html = await response.text()
       clearTimeout(timeoutId)
       
-      // Extraction regexes
       const accountMatch = html.match(/"uniqueId":"([^"]+)"/)
       const likesMatch = html.match(/"diggCount":(\d+)/)
       const viewsMatch = html.match(/"playCount":(\d+)/)
@@ -70,20 +79,26 @@ export async function addTikTokVideoToSound(soundId: string, videoUrl: string) {
       if (likesMatch) videoData.likes = parseInt(likesMatch[1])
       if (viewsMatch) videoData.views = parseInt(viewsMatch[1])
       if (followersMatch) videoData.followers = parseInt(followersMatch[1])
-    } catch (e) {
-      console.warn('Deep stats fetch failed, falling back to oEmbed info only', e)
+      
+      console.log('Extracted stats:', videoData.account_name, videoData.views)
+    } catch (e: any) {
+      console.error('Fetch error:', e.message)
     }
 
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from('tiktok_videos')
       .insert([videoData])
 
-    if (error) return { error: error.message }
+    if (dbError) {
+      console.error('Database error:', dbError)
+      return { error: 'Database fout: ' + dbError.message }
+    }
     
     revalidatePath('/dashboard/tiktok')
     return { success: true }
   } catch (error: any) {
-    return { error: 'Kon data niet ophalen. Is de link correct? ' + error.message }
+    console.error('Total failure:', error)
+    return { error: 'Fout bij verwerken link: ' + error.message }
   }
 }
 
