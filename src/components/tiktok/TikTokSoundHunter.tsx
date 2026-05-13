@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Music, Plus, Loader2, ExternalLink, Heart, Eye, Users, Trash2 } from 'lucide-react'
-import { createTikTokSound, addTikTokVideoToSound, getTikTokSounds } from '@/app/actions/tiktok-tracker'
+import { createTikTokSound, addTikTokVideoToSound, getTikTokSounds, addTikTokVideoManually } from '@/app/actions/tiktok-tracker'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 
 export default function TikTokSoundHunter() {
   const [sounds, setSounds] = useState<any[]>([])
@@ -15,6 +17,17 @@ export default function TikTokSoundHunter() {
   const [newSoundName, setNewSoundName] = useState('')
   const [addingVideoTo, setAddingVideoTo] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState('')
+  
+  // Manual form state
+  const [isManualOpen, setIsManualOpen] = useState(false)
+  const [selectedSoundId, setSelectedSoundId] = useState('')
+  const [manualData, setManualData] = useState({
+    url: '',
+    account_name: '',
+    views: '',
+    likes: '',
+    followers: ''
+  })
 
   useEffect(() => {
     fetchSounds()
@@ -54,6 +67,28 @@ export default function TikTokSoundHunter() {
       alert(res.error)
     }
     setAddingVideoTo(null)
+  }
+
+  async function handleManualSubmit() {
+    if (!manualData.url || !manualData.account_name) return
+    setLoading(true)
+    const res = await addTikTokVideoManually({
+      sound_id: selectedSoundId,
+      url: manualData.url,
+      account_name: manualData.account_name,
+      views: parseInt(manualData.views) || 0,
+      likes: parseInt(manualData.likes) || 0,
+      followers: parseInt(manualData.followers) || 0
+    })
+    
+    if (res.success) {
+      setIsManualOpen(false)
+      setManualData({ url: '', account_name: '', views: '', likes: '', followers: '' })
+      fetchSounds()
+    } else {
+      alert(res.error)
+    }
+    setLoading(false)
   }
 
   if (loading && sounds.length === 0) {
@@ -102,8 +137,8 @@ export default function TikTokSoundHunter() {
                 
                 <div className="flex gap-2 w-full md:w-auto">
                   <Input 
-                    placeholder="Plak TikTok video link..." 
-                    className="flex-1 md:w-80 text-sm"
+                    placeholder="Auto-link plakken..." 
+                    className="flex-1 md:w-64 text-sm"
                     value={addingVideoTo === sound.id ? videoUrl : ''}
                     onChange={(e) => {
                       setAddingVideoTo(sound.id)
@@ -120,6 +155,48 @@ export default function TikTokSoundHunter() {
                   >
                     {addingVideoTo === sound.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                   </Button>
+
+                  <Dialog open={isManualOpen && selectedSoundId === sound.id} onOpenChange={(open) => {
+                    setIsManualOpen(open)
+                    if (open) setSelectedSoundId(sound.id)
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="bg-white border-slate-200 text-slate-600">
+                        Handmatig
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Video Handmatig Toevoegen</DialogTitle>
+                        <DialogDescription>
+                          Vul de gegevens van de TikTok video zelf in.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="url" className="text-right text-xs">Video Link</Label>
+                          <Input id="url" className="col-span-3" value={manualData.url} onChange={(e) => setManualData({...manualData, url: e.target.value})} />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="name" className="text-right text-xs">Account</Label>
+                          <Input id="name" placeholder="@naam" className="col-span-3" value={manualData.account_name} onChange={(e) => setManualData({...manualData, account_name: e.target.value})} />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="views" className="text-right text-xs">Views</Label>
+                          <Input id="views" type="number" className="col-span-3" value={manualData.views} onChange={(e) => setManualData({...manualData, views: e.target.value})} />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="likes" className="text-right text-xs">Likes</Label>
+                          <Input id="likes" type="number" className="col-span-3" value={manualData.likes} onChange={(e) => setManualData({...manualData, likes: e.target.value})} />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="followers" className="text-right text-xs">Volgers</Label>
+                          <Input id="followers" type="number" className="col-span-3" value={manualData.followers} onChange={(e) => setManualData({...manualData, followers: e.target.value})} />
+                        </div>
+                      </div>
+                      <Button onClick={handleManualSubmit} className="w-full bg-blue-600">Toevoegen aan Lijst</Button>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </CardHeader>

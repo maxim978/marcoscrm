@@ -89,17 +89,31 @@ export async function addTikTokVideoToSound(soundId: string, videoUrl: string) {
       .from('tiktok_videos')
       .insert([videoData])
 
-    if (dbError) {
-      console.error('Database error:', dbError)
-      return { error: 'Database fout: ' + dbError.message }
-    }
-    
     revalidatePath('/dashboard/tiktok')
     return { success: true }
   } catch (error: any) {
     console.error('Total failure:', error)
     return { error: 'Fout bij verwerken link: ' + error.message }
   }
+}
+
+export async function addTikTokVideoManually(data: {
+  sound_id: string,
+  url: string,
+  account_name: string,
+  views: number,
+  likes: number,
+  followers: number
+}) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('tiktok_videos')
+    .insert([data])
+
+  if (error) return { error: error.message }
+  
+  revalidatePath('/dashboard/tiktok')
+  return { success: true }
 }
 
 export async function getTikTokSounds() {
