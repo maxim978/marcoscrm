@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { searchSpotifyPlaylists } from './spotify'
 
 export async function importTargetsFromCsv(data: any[]) {
   const supabase = await createClient()
