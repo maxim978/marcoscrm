@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Disc, Users, Settings, LogOut, Search } from 'lucide-react'
+import { Home, Disc, Users, Settings, LogOut, Search, Video } from 'lucide-react'
 import { logout } from '../actions/auth'
 
 export default async function DashboardLayout({
@@ -43,6 +43,10 @@ export default async function DashboardLayout({
           <Link href="/dashboard/spotify" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
             <Search className="h-5 w-5" />
             Spotify Finder
+          </Link>
+          <Link href="/dashboard/tiktok" className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+            <Video className="h-5 w-5" />
+            TikTok Hunter
           </Link>
         </nav>
         <div className="mt-auto p-4 border-t border-slate-800 absolute bottom-0 w-full md:w-64">
