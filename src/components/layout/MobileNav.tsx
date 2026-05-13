@@ -17,32 +17,32 @@ export function MobileNav({ user }: { user: any }) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-16 left-0 w-full bg-slate-900 border-t border-slate-800 z-50 animate-in slide-in-from-top duration-300">
-          <nav className="flex flex-col p-4 gap-2">
-            <Link href="/dashboard" onClick={toggle} className="flex items-center gap-3 rounded-lg px-3 py-3 text-slate-300 hover:bg-slate-800 active:bg-slate-700">
-              <Home className="h-5 w-5" /> Dashboard
+        <div className="absolute top-20 left-0 w-full bg-[#3071d8] border-t border-white/10 shadow-2xl z-50 animate-in slide-in-from-top duration-300">
+          <nav className="flex flex-col p-6 gap-3">
+            <Link href="/dashboard" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Home className="h-6 w-6 text-[#dfb433]" /> Dashboard
             </Link>
-            <Link href="/dashboard/artists" onClick={toggle} className="flex items-center gap-3 rounded-lg px-3 py-3 text-slate-300 hover:bg-slate-800 active:bg-slate-700">
-              <Users className="h-5 w-5" /> Artists
+            <Link href="/dashboard/artists" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Users className="h-6 w-6 text-[#dfb433]" /> Artists
             </Link>
-            <Link href="/dashboard/releases" onClick={toggle} className="flex items-center gap-3 rounded-lg px-3 py-3 text-slate-300 hover:bg-slate-800 active:bg-slate-700">
-              <Disc className="h-5 w-5" /> Releases
+            <Link href="/dashboard/releases" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Disc className="h-6 w-6 text-[#dfb433]" /> Releases
             </Link>
-            <Link href="/dashboard/targets" onClick={toggle} className="flex items-center gap-3 rounded-lg px-3 py-3 text-slate-300 hover:bg-slate-800 active:bg-slate-700">
-              <Users className="h-5 w-5" /> Targets
+            <Link href="/dashboard/targets" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Users className="h-6 w-6 text-[#dfb433]" /> Targets
             </Link>
-            <Link href="/dashboard/spotify" onClick={toggle} className="flex items-center gap-3 rounded-lg px-3 py-3 text-slate-300 hover:bg-slate-800 active:bg-slate-700">
-              <Search className="h-5 w-5" /> Spotify Finder
+            <Link href="/dashboard/spotify" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Search className="h-6 w-6 text-[#dfb433]" /> Spotify Finder
             </Link>
-            <Link href="/dashboard/tiktok" onClick={toggle} className="flex items-center gap-3 rounded-lg px-3 py-3 text-slate-300 hover:bg-slate-800 active:bg-slate-700">
-              <Video className="h-5 w-5" /> TikTok Hunter
+            <Link href="/dashboard/tiktok" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Video className="h-6 w-6 text-[#dfb433]" /> TikTok Hunter
             </Link>
             
-            <div className="mt-4 pt-4 border-t border-slate-800">
-              <p className="px-3 mb-4 text-xs text-slate-500 uppercase">Logged in as {user.email}</p>
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <p className="px-4 mb-4 text-xs text-white/60 uppercase font-black tracking-widest">Ingelogd als {user.email}</p>
               <form action={logout}>
-                <button type="submit" className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-red-400 hover:bg-slate-800 active:bg-slate-700">
-                  <LogOut className="h-5 w-5" /> Sign Out
+                <button type="submit" className="flex w-full items-center gap-4 rounded-xl px-4 py-4 text-red-300 hover:bg-white/10 active:bg-white/20 font-bold">
+                  <LogOut className="h-6 w-6" /> Uitloggen
                 </button>
               </form>
             </div>

@@ -19,9 +19,9 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-slate-50">
       {/* Mobile Header */}
-      <div className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-50 h-16">
+      <div className="md:hidden bg-[#3071d8] border-b border-white/10 p-4 flex justify-between items-center sticky top-0 z-50 h-20">
         <div className="flex items-center">
-          <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-8 w-auto" />
+          <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-12 w-auto" />
         </div>
         <MobileNav user={user} />
       </div>
