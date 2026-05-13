@@ -69,7 +69,8 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
 
       <div className="rounded-md border bg-white overflow-hidden">
         <div className="overflow-x-auto">
-          <TableHeader>
+          <Table>
+            <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>

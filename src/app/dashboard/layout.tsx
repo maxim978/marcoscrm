@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Home, Disc, Users, Settings, LogOut, Search, Video, Menu, X } from 'lucide-react'
 import { logout } from '../actions/auth'
-import { useState } from 'react'
 
 export default async function DashboardLayout({
   children,
