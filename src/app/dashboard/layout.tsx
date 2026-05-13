@@ -21,7 +21,7 @@ export default async function DashboardLayout({
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-50 h-16">
         <div className="flex items-center">
-          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-8 w-auto" />
+          <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-8 w-auto" />
         </div>
         <MobileNav user={user} />
       </div>
@@ -29,7 +29,7 @@ export default async function DashboardLayout({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#3071d8] text-white flex-col flex-shrink-0 sticky top-0 h-screen shadow-xl">
         <div className="p-6 flex justify-center bg-white border-b border-slate-100 mb-2">
-          <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-10 w-auto" />
+          <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-10 w-auto" />
         </div>
         <nav className="flex flex-col gap-1 p-4">
           <NavLinks />

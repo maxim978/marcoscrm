@@ -36,7 +36,7 @@ export default function LoginPage() {
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-6">
             <div className="bg-white p-4 rounded-xl shadow-inner">
-              <img src="/images/logo.png" alt="Marco Kraats Logo" className="h-12 w-auto" />
+              <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-12 w-auto" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-white">Artist Release CRM</CardTitle>
