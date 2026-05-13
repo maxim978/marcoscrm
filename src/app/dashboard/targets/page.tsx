@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Plus, ArrowUpDown } from 'lucide-react'
+import { Plus, ArrowUpDown, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { CsvImport } from '@/components/targets/CsvImport'
 import { ScreenshotImport } from '@/components/targets/ScreenshotImport'
