@@ -8,9 +8,10 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
+import { SubmitButton } from '@/components/ui/SubmitButton'
 
 export default async function NewTargetPage() {
-  async function createTarget(formData: FormData) {
+  async function createTargetAction(formData: FormData) {
     'use server'
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -48,7 +49,7 @@ export default async function NewTargetPage() {
           <CardDescription>Fill out the basic information for this target.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={createTarget} className="space-y-4">
+          <form action={createTargetAction} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Target Name (e.g. Playlist Name, Blog)</Label>
@@ -124,7 +125,7 @@ export default async function NewTargetPage() {
               <Button asChild variant="outline">
                 <Link href="/dashboard/targets">Cancel</Link>
               </Button>
-              <Button type="submit">Save Target</Button>
+              <SubmitButton>Save Target</SubmitButton>
             </div>
           </form>
         </CardContent>
@@ -132,3 +133,4 @@ export default async function NewTargetPage() {
     </div>
   )
 }
+

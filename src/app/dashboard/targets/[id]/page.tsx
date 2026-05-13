@@ -9,8 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { addSupportEvent } from '@/app/actions/support'
 import { Mail, Globe, Hash, Calendar, Plus, Link as LinkIcon } from 'lucide-react'
+import { SubmitButton } from '@/components/ui/SubmitButton'
 
 export default async function TargetDetailPage({ params }: { params: { id: string } }) {
+  async function addSupportEventAction(formData: FormData) {
+    'use server'
+    await addSupportEvent(formData)
+  }
+
   const supabase = await createClient()
 
   // Fetch Target
@@ -87,7 +93,7 @@ export default async function TargetDetailPage({ params }: { params: { id: strin
               <CardDescription>Track when this target supported a release.</CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={addSupportEvent} className="space-y-4">
+              <form action={addSupportEventAction} className="space-y-4">
                 <input type="hidden" name="target_id" value={target.id} />
                 
                 <div className="space-y-2">
@@ -137,10 +143,10 @@ export default async function TargetDetailPage({ params }: { params: { id: strin
                   <Input id="estimated_impact" name="estimated_impact" placeholder="e.g. 5k listeners" />
                 </div>
 
-                <Button type="submit" className="w-full">
+                <SubmitButton className="w-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Save Support Event
-                </Button>
+                </SubmitButton>
               </form>
             </CardContent>
           </Card>

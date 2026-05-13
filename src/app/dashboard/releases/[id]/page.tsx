@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { generateHitlist } from '@/app/actions/hitlist'
 import { HitlistRow } from '@/components/releases/HitlistRow'
 import { PlaylistPlacementForm } from '@/components/releases/PlaylistPlacementForm'
+import { GenerateHitlistButton } from '@/components/releases/GenerateHitlistButton'
 import { Play, Disc, Calendar, Hash } from 'lucide-react'
 
 export default async function ReleaseDetailPage({ params }: { params: { id: string } }) {
@@ -167,12 +168,10 @@ export default async function ReleaseDetailPage({ params }: { params: { id: stri
             <CardTitle>Promotional Hitlist</CardTitle>
             <p className="text-sm text-slate-500 mt-1">Targets selected for this release campaign.</p>
           </div>
-          <form action={generateAction}>
-            <Button type="submit" variant="secondary">
-              <Play className="mr-2 h-4 w-4" />
-              {hitlist && hitlist.length > 0 ? 'Regenerate Hitlist' : 'Maak Hitlist'}
-            </Button>
-          </form>
+          <GenerateHitlistButton 
+            releaseId={release.id} 
+            hasHitlist={!!(hitlist && hitlist.length > 0)} 
+          />
         </CardHeader>
         <CardContent>
           <Table>

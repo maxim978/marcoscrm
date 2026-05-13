@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,17 +6,18 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/ui/SubmitButton'
 
 export default async function NewReleasePage() {
   const supabase = await createClient()
   
-  // Need artists to associate with release
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: artists } = await supabase.from('artists').select('*').eq('user_id', user.id)
 
-  async function createRelease(formData: FormData) {
+  async function createReleaseAction(formData: FormData) {
     'use server'
     const supabase = await createClient()
 
@@ -48,7 +48,7 @@ export default async function NewReleasePage() {
           <CardDescription>Enter the basic information of the release.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={createRelease} className="space-y-4">
+          <form action={createReleaseAction} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Release Title</Label>
               <Input id="title" name="title" required placeholder="Track Name" />
@@ -107,7 +107,7 @@ export default async function NewReleasePage() {
               <Button asChild variant="outline">
                 <Link href="/dashboard/releases">Cancel</Link>
               </Button>
-              <Button type="submit">Create Release</Button>
+              <SubmitButton>Create Release</SubmitButton>
             </div>
           </form>
         </CardContent>
@@ -115,3 +115,4 @@ export default async function NewReleasePage() {
     </div>
   )
 }
+

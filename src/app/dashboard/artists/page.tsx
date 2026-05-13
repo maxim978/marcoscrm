@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { AddArtistForm } from '@/components/artists/AddArtistForm'
 
 export default async function ArtistsPage() {
   const supabase = await createClient()
@@ -41,29 +42,7 @@ export default async function ArtistsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Artist</CardTitle>
-              <CardDescription>Create a new artist profile.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form action={createArtist} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Artist Name</Label>
-                  <Input id="name" name="name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="genre">Primary Genre</Label>
-                  <Input id="genre" name="genre" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <Input id="country" name="country" />
-                </div>
-                <Button type="submit" className="w-full">Save Artist</Button>
-              </form>
-            </CardContent>
-          </Card>
+          <AddArtistForm action={createArtist} />
         </div>
 
         <div className="md:col-span-2 space-y-4">
