@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/ui/SubmitButton'
 import { updateTargetContactInfo } from '@/app/actions/contact'
 import { getRelatedPlaylists } from '@/app/actions/related'
-import { Mail, Phone, Video, User, Link as LinkIcon, Globe, Music } from 'lucide-react'
+import { searchSocialsForCurator } from '@/app/actions/social-search'
+import { Mail, Phone, Video, User, Link as LinkIcon, Globe, Music, Sparkles, Loader2 } from 'lucide-react'
 // No toast library found, using standard alert if needed
 
 interface ContactCardProps {
@@ -28,6 +29,7 @@ interface ContactCardProps {
 export function ContactCard({ target, trigger }: ContactCardProps) {
   const [open, setOpen] = useState(false)
   const [related, setRelated] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   // Fetch related playlists when dialog opens
   const handleOpenChange = async (newOpen: boolean) => {
@@ -35,6 +37,32 @@ export function ContactCard({ target, trigger }: ContactCardProps) {
     if (newOpen && target.contact_name) {
       const data = await getRelatedPlaylists(target.contact_name, target.id)
       setRelated(data)
+    }
+  }
+
+  async function handleAutoSearch() {
+    if (!target.contact_name) return
+    setIsSearching(true)
+    try {
+      const result = await searchSocialsForCurator(target.contact_name, target.name)
+      if (result.error) {
+        alert(result.error)
+      } else {
+        // We need to manually update the form fields
+        // Since we are using defaultValue, we might need to use state for the inputs if we want them to update live
+        // But for now, we'll tell the user or try to set them if they are in the DOM
+        const igInput = document.getElementById('instagram_url') as HTMLInputElement
+        const fbInput = document.getElementById('facebook_url') as HTMLInputElement
+        const ttInput = document.getElementById('tiktok_url') as HTMLInputElement
+        
+        if (igInput && result.instagram) igInput.value = result.instagram
+        if (fbInput && result.facebook) fbInput.value = result.facebook
+        if (ttInput && result.tiktok) ttInput.value = result.tiktok
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsSearching(false)
     }
   }
 
@@ -96,7 +124,26 @@ export function ContactCard({ target, trigger }: ContactCardProps) {
             <Input id="phone" name="phone" defaultValue={target.phone || ''} placeholder="+31 6 ..." />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 border-t pt-4">
+          <div className="grid grid-cols-1 gap-4 border-t pt-4 relative">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Social Media</Label>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1"
+                onClick={handleAutoSearch}
+                disabled={isSearching || !target.contact_name}
+              >
+                {isSearching ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
+                Auto-zoek socials
+              </Button>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="instagram_url" className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-pink-500" /> Instagram Link
