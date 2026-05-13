@@ -15,6 +15,7 @@ import { Mail, Phone, Video, User, Link as LinkIcon, Globe, Music, Sparkles, Loa
 interface ContactCardProps {
   target: {
     id: string
+    name: string
     contact_name: string | null
     email: string | null
     phone?: string | null
