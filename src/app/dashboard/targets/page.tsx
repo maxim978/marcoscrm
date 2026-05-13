@@ -98,9 +98,18 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
                   </TableCell>
                   <TableCell>{target.followers?.toLocaleString() || '0'}</TableCell>
                   <TableCell className="text-right">
-                    <Button asChild variant="ghost" size="sm">
-                      <Link href={`/dashboard/targets/${target.id}`}>View</Link>
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {target.social_links?.spotify && (
+                        <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <a href={target.social_links.spotify} target="_blank" rel="noreferrer">
+                            <Globe className="h-4 w-4 text-green-500" />
+                          </a>
+                        </Button>
+                      )}
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/dashboard/targets/${target.id}`}>View</Link>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

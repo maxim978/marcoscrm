@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/ui/SubmitButton'
 import { updateTargetContactInfo } from '@/app/actions/contact'
-import { Mail, Phone, Video, User, Link as LinkIcon, Globe } from 'lucide-react'
+import { getRelatedPlaylists } from '@/app/actions/related'
+import { Mail, Phone, Video, User, Link as LinkIcon, Globe, Music } from 'lucide-react'
 // No toast library found, using standard alert if needed
 
 interface ContactCardProps {
@@ -25,6 +26,16 @@ interface ContactCardProps {
 
 export function ContactCard({ target, trigger }: ContactCardProps) {
   const [open, setOpen] = useState(false)
+  const [related, setRelated] = useState<any[]>([])
+
+  // Fetch related playlists when dialog opens
+  const handleOpenChange = async (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (newOpen && target.contact_name) {
+      const data = await getRelatedPlaylists(target.contact_name, target.id)
+      setRelated(data)
+    }
+  }
 
   async function handleSubmit(formData: FormData) {
     const result = await updateTargetContactInfo(formData)
@@ -37,7 +48,7 @@ export function ContactCard({ target, trigger }: ContactCardProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <button className="text-blue-500 hover:underline font-medium text-left">
@@ -99,6 +110,27 @@ export function ContactCard({ target, trigger }: ContactCardProps) {
               <Input id="tiktok_url" name="tiktok_url" defaultValue={target.tiktok_url || ''} placeholder="https://tiktok.com/@..." />
             </div>
           </div>
+
+          {related.length > 0 && (
+            <div className="border-t pt-4 space-y-2">
+              <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Andere Playlists van deze beheerder</Label>
+              <div className="space-y-1">
+                {related.map((pl) => (
+                  <div key={pl.id} className="flex items-center justify-between text-sm p-2 bg-slate-50 rounded border border-slate-100">
+                    <div className="flex items-center gap-2 truncate">
+                      <Music className="h-3 w-3 text-slate-400 shrink-0" />
+                      <span className="truncate font-medium">{pl.name}</span>
+                    </div>
+                    {pl.social_links?.spotify && (
+                      <a href={pl.social_links.spotify} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline shrink-0 ml-2">
+                        Open Spotify
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end pt-4">
             <SubmitButton className="w-full">Gegevens opslaan</SubmitButton>
