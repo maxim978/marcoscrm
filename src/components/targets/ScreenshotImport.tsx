@@ -101,6 +101,9 @@ export function ScreenshotImport() {
               successCount++
               setBatchProgress(prev => ({ ...prev, success: successCount }))
             }
+
+            // Add a small delay to prevent OpenAI Rate Limits (TPM)
+            await new Promise(resolve => setTimeout(resolve, 2000))
           }
         } catch (fileErr: any) {
           console.error("Error processing file", i, fileErr)
