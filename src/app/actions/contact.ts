@@ -26,6 +26,25 @@ export async function updateTargetContactInfo(formData: FormData) {
     return { error: error.message }
   }
 
+  // NEW: Synchronize contact info across all targets with the same contact_name
+  if (updateData.contact_name) {
+    const { error: syncError } = await supabase
+      .from('targets')
+      .update({
+        email: updateData.email,
+        phone: updateData.phone,
+        facebook_url: updateData.facebook_url,
+        instagram_url: updateData.instagram_url,
+        tiktok_url: updateData.tiktok_url,
+      })
+      .eq('contact_name', updateData.contact_name)
+      .neq('id', id) // update others, not the one we just did
+
+    if (syncError) {
+      console.error('Error synchronizing contact info:', syncError)
+    }
+  }
+
   revalidatePath('/dashboard/targets')
   revalidatePath(`/dashboard/targets/${id}`)
   return { success: true }

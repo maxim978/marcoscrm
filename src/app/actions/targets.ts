@@ -44,6 +44,29 @@ export async function importTargetFromScreenshot(
 
   if (!user) return { error: 'Not authenticated' }
 
+  let inheritedData = {}
+
+  // NEW: Look for existing contact details for this curator
+  if (curatorName) {
+    const { data: existingCurator } = await supabase
+      .from('targets')
+      .select('email, phone, facebook_url, instagram_url, tiktok_url')
+      .eq('contact_name', curatorName)
+      .not('email', 'is', null) // Try to find one that at least has an email
+      .limit(1)
+      .maybeSingle()
+
+    if (existingCurator) {
+      inheritedData = {
+        email: existingCurator.email,
+        phone: existingCurator.phone,
+        facebook_url: existingCurator.facebook_url,
+        instagram_url: existingCurator.instagram_url,
+        tiktok_url: existingCurator.tiktok_url
+      }
+    }
+  }
+
   const targetData = {
     user_id: user.id,
     name: playlistName || 'Unknown Playlist',
@@ -53,7 +76,8 @@ export async function importTargetFromScreenshot(
     followers: followers || 0,
     relationship_status: 'koud',
     score: 50,
-    notes: `Imported via AI Screenshot Scanner on ${new Date().toLocaleDateString()}`
+    notes: `Imported via AI Screenshot Scanner on ${new Date().toLocaleDateString()}`,
+    ...inheritedData
   }
 
   const { error } = await supabase
