@@ -116,6 +116,38 @@ export async function addTikTokVideoManually(data: {
   return { success: true }
 }
 
+export async function updateTikTokVideo(id: string, data: {
+  account_name?: string,
+  views?: number,
+  likes?: number,
+  followers?: number,
+  url?: string
+}) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('tiktok_videos')
+    .update(data)
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  
+  revalidatePath('/dashboard/tiktok')
+  return { success: true }
+}
+
+export async function deleteTikTokVideo(id: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('tiktok_videos')
+    .delete()
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  
+  revalidatePath('/dashboard/tiktok')
+  return { success: true }
+}
+
 export async function getTikTokSounds() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

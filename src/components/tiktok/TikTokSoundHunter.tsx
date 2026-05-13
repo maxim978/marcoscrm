@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Music, Plus, Loader2, ExternalLink, Heart, Eye, Users, Trash2 } from 'lucide-react'
-import { createTikTokSound, addTikTokVideoToSound, getTikTokSounds, addTikTokVideoManually } from '@/app/actions/tiktok-tracker'
+import { createTikTokSound, addTikTokVideoToSound, getTikTokSounds, addTikTokVideoManually, updateTikTokVideo, deleteTikTokVideo } from '@/app/actions/tiktok-tracker'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { ArrowUpDown, Edit, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function TikTokSoundHunter() {
   const [sounds, setSounds] = useState<any[]>([])
@@ -221,108 +222,281 @@ export default function TikTokSoundHunter() {
             </div>
 
             <CardContent className="p-0">
-              {/* Mobile View: Card List */}
-              <div className="block md:hidden bg-slate-50 p-4 space-y-4">
-                {sound.tiktok_videos && sound.tiktok_videos.length > 0 ? (
-                  sound.tiktok_videos.map((video: any) => (
-                    <div key={video.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3">
-                      <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                        <span className="font-black text-[#3071d8] text-lg">@{video.account_name}</span>
-                        <a href={video.url} target="_blank" rel="noreferrer" className="bg-[#3071d8]/10 p-2 rounded-lg text-[#3071d8]">
-                          <ExternalLink className="h-5 w-5" />
-                        </a>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 py-1">
-                        <div className="text-center">
-                          <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Views</div>
-                          <div className="text-base font-black flex items-center justify-center gap-1 text-slate-900">
-                            <Eye className="h-3.5 w-3.5 text-blue-500" />
-                            {video.views?.toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="text-center border-x border-slate-100">
-                          <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Likes</div>
-                          <div className="text-base font-black flex items-center justify-center gap-1 text-slate-900">
-                            <Heart className="h-3.5 w-3.5 text-red-500 fill-red-500" />
-                            {video.likes?.toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Volgers</div>
-                          <div className="text-base font-black flex items-center justify-center gap-1 text-[#dfb433]">
-                            <Users className="h-3.5 w-3.5" />
-                            {video.followers?.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="py-8 text-center text-slate-400 italic font-medium">Nog geen video's. Plak een link!</div>
-                )}
-              </div>
-
-              {/* Desktop View: Table */}
-              <div className="hidden md:block">
-                {sound.tiktok_videos && sound.tiktok_videos.length > 0 ? (
-                  <Table>
-                    <TableHeader className="bg-slate-50/50">
-                      <TableRow className="hover:bg-transparent border-none">
-                        <TableHead className="pl-6 font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Account</TableHead>
-                        <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Views</TableHead>
-                        <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Likes</TableHead>
-                        <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-[#dfb433] h-12">Volgers</TableHead>
-                        <TableHead className="text-right pr-6 font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Link</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sound.tiktok_videos.map((video: any) => (
-                        <TableRow key={video.id} className="hover:bg-slate-50/80 transition-colors border-slate-50">
-                          <TableCell className="pl-6 font-black text-[#3071d8] text-lg py-4">
-                            @{video.account_name}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="inline-flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-blue-700 font-black">
-                              <Eye className="h-4 w-4" />
-                              {video.views?.toLocaleString()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1.5 text-red-500 font-black">
-                              <Heart className="h-4 w-4 fill-current" />
-                              {video.likes?.toLocaleString()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1.5 text-[#dfb433] font-black">
-                              <Users className="h-4 w-4" />
-                              {video.followers?.toLocaleString()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right pr-6">
-                            <Button variant="ghost" size="sm" asChild className="hover:bg-[#3071d8]/10 text-[#3071d8] rounded-xl h-10 w-10 p-0">
-                              <a href={video.url} target="_blank" rel="noreferrer">
-                                <ExternalLink className="h-5 w-5" />
-                              </a>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="p-16 text-center text-slate-300 flex flex-col items-center gap-4">
-                    <div className="bg-slate-50 p-6 rounded-full">
-                      <Music className="h-12 w-12 opacity-20" />
-                    </div>
-                    <p className="italic font-bold text-lg">Nog geen video's gevolgd. Plak een link om te starten!</p>
-                  </div>
-                )}
-              </div>
+              <TikTokVideoList 
+                videos={sound.tiktok_videos || []} 
+                onRefresh={fetchSounds}
+              />
             </CardContent>
           </Card>
         ))}
       </div>
+    </div>
+  )
+}
+
+function TikTokVideoList({ videos, onRefresh }: { videos: any[], onRefresh: () => void }) {
+  const [sortField, setSortField] = useState('views')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [editingVideo, setEditingVideo] = useState<any>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const itemsPerPage = 5
+
+  const sortedVideos = [...videos].sort((a, b) => {
+    let valA = a[sortField]
+    let valB = b[sortField]
+    
+    if (sortField === 'account_name') {
+      valA = (valA || '').toLowerCase()
+      valB = (valB || '').toLowerCase()
+      return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
+    }
+    
+    valA = valA || 0
+    valB = valB || 0
+    return sortOrder === 'asc' ? valA - valB : valB - valA
+  })
+
+  const totalPages = Math.ceil(sortedVideos.length / itemsPerPage)
+  const paginatedVideos = sortedVideos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('desc')
+    }
+    setCurrentPage(1)
+  }
+
+  const handleUpdate = async () => {
+    if (!editingVideo) return
+    const res = await updateTikTokVideo(editingVideo.id, {
+      account_name: editingVideo.account_name,
+      views: parseInt(editingVideo.views) || 0,
+      likes: parseInt(editingVideo.likes) || 0,
+      followers: parseInt(editingVideo.followers) || 0
+    })
+    if (res.success) {
+      setIsEditOpen(false)
+      onRefresh()
+    } else {
+      alert(res.error)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Weet je zeker dat je deze video wilt verwijderen?')) return
+    const res = await deleteTikTokVideo(id)
+    if (res.success) onRefresh()
+  }
+
+  if (videos.length === 0) {
+    return (
+      <div className="p-16 text-center text-slate-300 flex flex-col items-center gap-4">
+        <div className="bg-slate-50 p-6 rounded-full">
+          <Music className="h-12 w-12 opacity-20" />
+        </div>
+        <p className="italic font-bold text-lg">Nog geen video's. Plak een link!</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col">
+      {/* Sorting Controls */}
+      <div className="bg-slate-50/50 p-4 border-b border-slate-100 flex flex-wrap gap-2 items-center justify-between">
+        <div className="flex gap-2">
+          {[
+            { id: 'views', label: 'Views', icon: Eye },
+            { id: 'likes', label: 'Likes', icon: Heart },
+            { id: 'followers', label: 'Volgers', icon: Users },
+            { id: 'account_name', label: 'Alfabet', icon: ArrowUpDown },
+          ].map((item) => (
+            <Button
+              key={item.id}
+              variant={sortField === item.id ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => toggleSort(item.id)}
+              className={`h-8 text-[11px] font-black uppercase tracking-wider rounded-full ${sortField === item.id ? 'bg-[#3071d8] text-white' : 'text-slate-500'}`}
+            >
+              <item.icon className="h-3 w-3 mr-1" />
+              {item.label}
+              {sortField === item.id && (
+                <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+              )}
+            </Button>
+          ))}
+        </div>
+        
+        <div className="text-[11px] font-bold text-slate-400">
+          Pagina {currentPage} van {totalPages || 1}
+        </div>
+      </div>
+
+      {/* Mobile View: Card List */}
+      <div className="block md:hidden bg-slate-50 p-4 space-y-4">
+        {paginatedVideos.map((video: any) => (
+          <div key={video.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+              <span className="font-black text-[#3071d8] text-lg">@{video.account_name}</span>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-slate-400 hover:text-[#3071d8]" onClick={() => {
+                  setEditingVideo(video)
+                  setIsEditOpen(true)
+                }}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <a href={video.url} target="_blank" rel="noreferrer" className="bg-[#3071d8]/10 p-2 rounded-lg text-[#3071d8]">
+                  <ExternalLink className="h-5 w-5" />
+                </a>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 py-1">
+              <div className="text-center">
+                <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Views</div>
+                <div className="text-base font-black flex items-center justify-center gap-1 text-slate-900">
+                  <Eye className="h-3.5 w-3.5 text-blue-500" />
+                  {video.views?.toLocaleString()}
+                </div>
+              </div>
+              <div className="text-center border-x border-slate-100">
+                <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Likes</div>
+                <div className="text-base font-black flex items-center justify-center gap-1 text-slate-900">
+                  <Heart className="h-3.5 w-3.5 text-red-500 fill-red-500" />
+                  {video.likes?.toLocaleString()}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Volgers</div>
+                <div className="text-base font-black flex items-center justify-center gap-1 text-[#dfb433]">
+                  <Users className="h-3.5 w-3.5" />
+                  {video.followers?.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop View: Table */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="hover:bg-transparent border-none">
+              <TableHead className="pl-6 font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Account</TableHead>
+              <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Views</TableHead>
+              <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Likes</TableHead>
+              <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-[#dfb433] h-12">Volgers</TableHead>
+              <TableHead className="text-right pr-6 font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Acties</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedVideos.map((video: any) => (
+              <TableRow key={video.id} className="hover:bg-slate-50/80 transition-colors border-slate-50">
+                <TableCell className="pl-6 font-black text-[#3071d8] text-lg py-4">
+                  @{video.account_name}
+                </TableCell>
+                <TableCell className="text-center">
+                  <div className="inline-flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-blue-700 font-black">
+                    <Eye className="h-4 w-4" />
+                    {video.views?.toLocaleString()}
+                  </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-red-500 font-black">
+                    <Heart className="h-4 w-4 fill-current" />
+                    {video.likes?.toLocaleString()}
+                  </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-[#dfb433] font-black">
+                    <Users className="h-4 w-4" />
+                    {video.followers?.toLocaleString()}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right pr-6">
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-slate-400 hover:text-[#3071d8] rounded-xl" onClick={() => {
+                      setEditingVideo(video)
+                      setIsEditOpen(true)
+                    }}>
+                      <Edit className="h-5 w-5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild className="hover:bg-[#3071d8]/10 text-[#3071d8] rounded-xl h-10 w-10 p-0">
+                      <a href={video.url} target="_blank" rel="noreferrer">
+                        <ExternalLink className="h-5 w-5" />
+                      </a>
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-slate-300 hover:text-red-500 rounded-xl" onClick={() => handleDelete(video.id)}>
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="p-4 bg-white border-t border-slate-50 flex justify-center items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            className="rounded-xl font-bold border-slate-200"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" /> Vorige
+          </Button>
+          <div className="text-sm font-black text-slate-500">
+            {currentPage} / {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            className="rounded-xl font-bold border-slate-200"
+          >
+            Volgende <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Video Bewerken</DialogTitle>
+            <DialogDescription>Pas de cijfers aan voor @{editingVideo?.account_name}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-name" className="font-bold">Account</Label>
+              <Input id="edit-name" value={editingVideo?.account_name || ''} onChange={(e) => setEditingVideo({...editingVideo, account_name: e.target.value})} className="h-11" />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-views" className="font-bold">Views</Label>
+                <Input id="edit-views" type="number" value={editingVideo?.views || 0} onChange={(e) => setEditingVideo({...editingVideo, views: e.target.value})} className="h-11" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-likes" className="font-bold">Likes</Label>
+                <Input id="edit-likes" type="number" value={editingVideo?.likes || 0} onChange={(e) => setEditingVideo({...editingVideo, likes: e.target.value})} className="h-11" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-followers" className="font-bold">Volgers</Label>
+                <Input id="edit-followers" type="number" value={editingVideo?.followers || 0} onChange={(e) => setEditingVideo({...editingVideo, followers: e.target.value})} className="h-11" />
+              </div>
+            </div>
+          </div>
+          <Button onClick={handleUpdate} className="w-full bg-[#3071d8] text-white font-bold h-12 text-lg">Wijzigingen Opslaan</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
