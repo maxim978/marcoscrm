@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/ui/SubmitButton'
 import { updateTargetContactInfo } from '@/app/actions/contact'
 import { Mail, Phone, Video, User, Link as LinkIcon, Globe } from 'lucide-react'
-import { toast } from 'sonner' // Assuming sonner is used, if not I'll use alert
+// No toast library found, using standard alert if needed
 
 interface ContactCardProps {
   target: {
