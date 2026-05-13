@@ -56,10 +56,17 @@ export default function TikTokSoundHunter() {
     }
   }
 
+  const extractUrl = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const match = text.match(urlRegex)
+    return match ? match[0] : text
+  }
+
   async function handleAddVideo(soundId: string) {
-    if (!videoUrl) return
+    const cleanedUrl = extractUrl(videoUrl)
+    if (!cleanedUrl) return
     setAddingVideoTo(soundId)
-    const res = await addTikTokVideoToSound(soundId, videoUrl)
+    const res = await addTikTokVideoToSound(soundId, cleanedUrl)
     if (res.success) {
       setVideoUrl('')
       fetchSounds()
@@ -70,11 +77,12 @@ export default function TikTokSoundHunter() {
   }
 
   async function handleManualSubmit() {
-    if (!manualData.url || !manualData.account_name) return
+    const cleanedUrl = extractUrl(manualData.url)
+    if (!cleanedUrl || !manualData.account_name) return
     setLoading(true)
     const res = await addTikTokVideoManually({
       sound_id: selectedSoundId,
-      url: manualData.url,
+      url: cleanedUrl,
       account_name: manualData.account_name,
       views: parseInt(manualData.views) || 0,
       likes: parseInt(manualData.likes) || 0,
@@ -94,164 +102,223 @@ export default function TikTokSoundHunter() {
   if (loading && sounds.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#3071d8]" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-8 pb-12">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">TikTok Sound Tracker</h1>
-          <p className="text-slate-500 text-sm md:text-base">Beheer video's en statistieken per sound.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">TikTok Sound Tracker</h1>
+          <p className="text-slate-500 font-medium">Volg je sound-performance in real-time.</p>
         </div>
         
-        <form onSubmit={handleCreateSound} className="flex gap-2 w-full md:w-auto">
+        <form onSubmit={handleCreateSound} className="flex gap-3 w-full lg:w-auto">
           <Input 
-            placeholder="Nieuwe Sound Naam..." 
+            placeholder="Bijv. Magie Release..." 
             value={newSoundName}
             onChange={(e) => setNewSoundName(e.target.value)}
-            className="flex-1 md:w-64"
+            className="flex-1 lg:w-72 border-slate-200 focus:border-[#3071d8] focus:ring-[#3071d8]/10"
           />
-          <Button type="submit">
-            <Plus className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Sound Aanmaken</span>
+          <Button type="submit" className="bg-[#3071d8] hover:bg-[#3071d8]/90 text-white shadow-lg shadow-blue-500/20 px-6 font-bold">
+            <Plus className="h-4 w-4 mr-2" /> Sound Toevoegen
           </Button>
         </form>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-8">
         {sounds.map((sound) => (
-          <Card key={sound.id} className="overflow-hidden border-l-4 border-l-blue-500">
-            <CardHeader className="bg-slate-50/50 p-4 md:p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <Music className="h-5 w-5 text-blue-600" />
+          <Card key={sound.id} className="overflow-hidden border-none shadow-xl shadow-slate-200/50 rounded-2xl bg-white">
+            <div className="bg-[#3071d8] p-4 md:p-6 text-white">
+              <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/20 p-3 rounded-xl backdrop-blur-md hidden sm:block">
+                    <Music className="h-6 w-6 text-[#dfb433]" />
                   </div>
                   <div>
-                    <CardTitle className="text-base md:text-lg">{sound.name}</CardTitle>
-                    <CardDescription className="text-xs md:text-sm">{sound.tiktok_videos?.length || 0} video's gevolgd</CardDescription>
+                    <h2 className="text-xl md:text-2xl font-bold">{sound.name}</h2>
+                    <div className="flex gap-2 mt-1">
+                      <Badge className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                        {sound.tiktok_videos?.length || 0} Video's
+                      </Badge>
+                      <Badge className="bg-[#dfb433] text-slate-900 border-none font-bold">
+                        Totaal: {(sound.tiktok_videos?.reduce((acc: number, v: any) => acc + (v.views || 0), 0) || 0).toLocaleString()} Views
+                      </Badge>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex gap-2 w-full md:w-auto">
-                  <Input 
-                    placeholder="Auto-link plakken..." 
-                    className="flex-1 md:w-64 text-sm"
-                    value={addingVideoTo === sound.id ? videoUrl : ''}
-                    onChange={(e) => {
-                      setAddingVideoTo(sound.id)
-                      setVideoUrl(e.target.value)
-                    }}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddVideo(sound.id)}
-                  />
-                  <Button 
-                    onClick={() => handleAddVideo(sound.id)} 
-                    disabled={addingVideoTo === sound.id}
-                    variant="secondary"
-                    size="sm"
-                    className="md:size-default"
-                  >
-                    {addingVideoTo === sound.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  </Button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+                  <div className="relative flex-1 sm:w-80">
+                    <Input 
+                      placeholder="Plak TikTok link hier..." 
+                      className="w-full bg-white text-slate-900 border-none shadow-inner pr-12 h-11 text-sm sm:text-base"
+                      value={addingVideoTo === sound.id ? videoUrl : ''}
+                      onChange={(e) => {
+                        setAddingVideoTo(sound.id)
+                        setVideoUrl(e.target.value)
+                      }}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddVideo(sound.id)}
+                    />
+                    <Button 
+                      onClick={() => handleAddVideo(sound.id)} 
+                      disabled={addingVideoTo === sound.id}
+                      className="absolute right-1 top-1 bottom-1 bg-[#3071d8] hover:bg-blue-700 text-white p-2 h-9 w-9"
+                    >
+                      {addingVideoTo === sound.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-5 w-5" />}
+                    </Button>
+                  </div>
 
                   <Dialog open={isManualOpen && selectedSoundId === sound.id} onOpenChange={(open) => {
                     setIsManualOpen(open)
                     if (open) setSelectedSoundId(sound.id)
                   }}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="bg-white border-slate-200 text-slate-600">
+                      <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-11 px-6 font-bold">
                         Handmatig
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-[425px] bg-white text-slate-900">
                       <DialogHeader>
-                        <DialogTitle>Video Handmatig Toevoegen</DialogTitle>
-                        <DialogDescription>
-                          Vul de gegevens van de TikTok video zelf in.
+                        <DialogTitle className="text-2xl font-bold">Video Handmatig Toevoegen</DialogTitle>
+                        <DialogDescription className="text-slate-500 font-medium">
+                          Vul de gegevens handmatig in om de video toe te voegen aan {sound.name}.
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="url" className="text-right text-xs">Video Link</Label>
-                          <Input id="url" className="col-span-3" value={manualData.url} onChange={(e) => setManualData({...manualData, url: e.target.value})} />
+                      <div className="grid gap-6 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="url" className="font-bold text-slate-700">Video Link</Label>
+                          <Input id="url" placeholder="https://tiktok.com/..." value={manualData.url} onChange={(e) => setManualData({...manualData, url: e.target.value})} className="h-11" />
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="name" className="text-right text-xs">Account</Label>
-                          <Input id="name" placeholder="@naam" className="col-span-3" value={manualData.account_name} onChange={(e) => setManualData({...manualData, account_name: e.target.value})} />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="name" className="font-bold text-slate-700">Account</Label>
+                            <Input id="name" placeholder="@naam" value={manualData.account_name} onChange={(e) => setManualData({...manualData, account_name: e.target.value})} className="h-11" />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="views" className="font-bold text-slate-700">Views</Label>
+                            <Input id="views" type="number" value={manualData.views} onChange={(e) => setManualData({...manualData, views: e.target.value})} className="h-11" />
+                          </div>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="views" className="text-right text-xs">Views</Label>
-                          <Input id="views" type="number" className="col-span-3" value={manualData.views} onChange={(e) => setManualData({...manualData, views: e.target.value})} />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="likes" className="text-right text-xs">Likes</Label>
-                          <Input id="likes" type="number" className="col-span-3" value={manualData.likes} onChange={(e) => setManualData({...manualData, likes: e.target.value})} />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="followers" className="text-right text-xs">Volgers</Label>
-                          <Input id="followers" type="number" className="col-span-3" value={manualData.followers} onChange={(e) => setManualData({...manualData, followers: e.target.value})} />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="likes" className="font-bold text-slate-700">Likes</Label>
+                            <Input id="likes" type="number" value={manualData.likes} onChange={(e) => setManualData({...manualData, likes: e.target.value})} className="h-11" />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="followers" className="font-bold text-slate-700">Volgers</Label>
+                            <Input id="followers" type="number" value={manualData.followers} onChange={(e) => setManualData({...manualData, followers: e.target.value})} className="h-11" />
+                          </div>
                         </div>
                       </div>
-                      <Button onClick={handleManualSubmit} className="w-full bg-blue-600">Toevoegen aan Lijst</Button>
+                      <Button onClick={handleManualSubmit} className="w-full bg-[#3071d8] text-white font-bold h-14 text-xl shadow-lg shadow-blue-500/20">Toevoegen aan Lijst</Button>
                     </DialogContent>
                   </Dialog>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              {sound.tiktok_videos && sound.tiktok_videos.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="pl-6">Account</TableHead>
-                      <TableHead className="text-center">Views</TableHead>
-                      <TableHead className="text-center">Likes</TableHead>
-                      <TableHead className="text-center">Volgers</TableHead>
-                      <TableHead className="text-right pr-6">Link</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sound.tiktok_videos.map((video: any) => (
-                      <TableRow key={video.id}>
-                        <TableCell className="pl-6 font-bold text-blue-600">
-                          @{video.account_name}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <Eye className="h-3 w-3 text-slate-400" />
+            </div>
+
+            <CardContent className="p-0">
+              {/* Mobile View: Card List */}
+              <div className="block md:hidden bg-slate-50 p-4 space-y-4">
+                {sound.tiktok_videos && sound.tiktok_videos.length > 0 ? (
+                  sound.tiktok_videos.map((video: any) => (
+                    <div key={video.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3">
+                      <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                        <span className="font-black text-[#3071d8] text-lg">@{video.account_name}</span>
+                        <a href={video.url} target="_blank" rel="noreferrer" className="bg-[#3071d8]/10 p-2 rounded-lg text-[#3071d8]">
+                          <ExternalLink className="h-5 w-5" />
+                        </a>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 py-1">
+                        <div className="text-center">
+                          <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Views</div>
+                          <div className="text-base font-black flex items-center justify-center gap-1 text-slate-900">
+                            <Eye className="h-3.5 w-3.5 text-blue-500" />
                             {video.views?.toLocaleString()}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-center font-medium">
-                          <div className="flex items-center justify-center gap-1">
-                            <Heart className="h-3 w-3 text-red-500" />
+                        </div>
+                        <div className="text-center border-x border-slate-100">
+                          <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Likes</div>
+                          <div className="text-base font-black flex items-center justify-center gap-1 text-slate-900">
+                            <Heart className="h-3.5 w-3.5 text-red-500 fill-red-500" />
                             {video.likes?.toLocaleString()}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1 text-slate-500">
-                            <Users className="h-3 w-3" />
+                        </div>
+                        <div className="text-center">
+                          <div className="text-[10px] uppercase text-slate-400 font-black tracking-wider mb-1">Volgers</div>
+                          <div className="text-base font-black flex items-center justify-center gap-1 text-[#dfb433]">
+                            <Users className="h-3.5 w-3.5" />
                             {video.followers?.toLocaleString()}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right pr-6">
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href={video.url} target="_blank" rel="noreferrer">
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                        </TableCell>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-8 text-center text-slate-400 italic font-medium">Nog geen video's. Plak een link!</div>
+                )}
+              </div>
+
+              {/* Desktop View: Table */}
+              <div className="hidden md:block">
+                {sound.tiktok_videos && sound.tiktok_videos.length > 0 ? (
+                  <Table>
+                    <TableHeader className="bg-slate-50/50">
+                      <TableRow className="hover:bg-transparent border-none">
+                        <TableHead className="pl-6 font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Account</TableHead>
+                        <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Views</TableHead>
+                        <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Likes</TableHead>
+                        <TableHead className="text-center font-black uppercase text-[11px] tracking-widest text-[#dfb433] h-12">Volgers</TableHead>
+                        <TableHead className="text-right pr-6 font-black uppercase text-[11px] tracking-widest text-slate-400 h-12">Link</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="p-8 text-center text-slate-400 italic">
-                  Nog geen video's toegevoegd voor deze sound. Plak hierboven een link om te beginnen.
-                </div>
-              )}
+                    </TableHeader>
+                    <TableBody>
+                      {sound.tiktok_videos.map((video: any) => (
+                        <TableRow key={video.id} className="hover:bg-slate-50/80 transition-colors border-slate-50">
+                          <TableCell className="pl-6 font-black text-[#3071d8] text-lg py-4">
+                            @{video.account_name}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="inline-flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-blue-700 font-black">
+                              <Eye className="h-4 w-4" />
+                              {video.views?.toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1.5 text-red-500 font-black">
+                              <Heart className="h-4 w-4 fill-current" />
+                              {video.likes?.toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1.5 text-[#dfb433] font-black">
+                              <Users className="h-4 w-4" />
+                              {video.followers?.toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right pr-6">
+                            <Button variant="ghost" size="sm" asChild className="hover:bg-[#3071d8]/10 text-[#3071d8] rounded-xl h-10 w-10 p-0">
+                              <a href={video.url} target="_blank" rel="noreferrer">
+                                <ExternalLink className="h-5 w-5" />
+                              </a>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="p-16 text-center text-slate-300 flex flex-col items-center gap-4">
+                    <div className="bg-slate-50 p-6 rounded-full">
+                      <Music className="h-12 w-12 opacity-20" />
+                    </div>
+                    <p className="italic font-bold text-lg">Nog geen video's gevolgd. Plak een link om te starten!</p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
