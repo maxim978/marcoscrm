@@ -28,3 +28,27 @@ export async function createInfluencer(data: any) {
   revalidatePath('/dashboard/influencers')
   return { success: true }
 }
+
+export async function updateInfluencer(id: string, data: any) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('influencers')
+    .update(data)
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/influencers')
+  return { success: true }
+}
+
+export async function deleteInfluencer(id: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('influencers')
+    .delete()
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/influencers')
+  return { success: true }
+}
