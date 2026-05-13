@@ -15,6 +15,7 @@ export default async function NewInfluencerPage() {
     'use server'
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
     const rawData = {
       user_id: user.id,
