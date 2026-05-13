@@ -44,15 +44,15 @@ export async function importTargetFromScreenshot(
 
   if (!user) return { error: 'Not authenticated' }
 
-  let inheritedData = {}
+  let inheritedData: any = {}
 
-  // NEW: Look for existing contact details for this curator
+  // 1. Look for existing contact details for this curator
   if (curatorName) {
     const { data: existingCurator } = await supabase
       .from('targets')
-      .select('email, phone, facebook_url, instagram_url, tiktok_url')
+      .select('email, phone, facebook_url, instagram_url, tiktok_url, social_links')
       .eq('contact_name', curatorName)
-      .not('email', 'is', null) // Try to find one that at least has an email
+      .not('email', 'is', null)
       .limit(1)
       .maybeSingle()
 
@@ -62,7 +62,20 @@ export async function importTargetFromScreenshot(
         phone: existingCurator.phone,
         facebook_url: existingCurator.facebook_url,
         instagram_url: existingCurator.instagram_url,
-        tiktok_url: existingCurator.tiktok_url
+        tiktok_url: existingCurator.tiktok_url,
+        social_links: existingCurator.social_links
+      }
+    }
+  }
+
+  // 2. NEW: Automatically search for the Spotify Playlist Link if not inherited
+  if (!inheritedData.social_links?.spotify && playlistName) {
+    const searchResult = await searchSpotifyPlaylists(playlistName)
+    if (searchResult.playlists && searchResult.playlists.length > 0) {
+      const bestMatch = searchResult.playlists[0]
+      inheritedData.social_links = { 
+        ...(inheritedData.social_links || {}),
+        spotify: bestMatch.external_urls?.spotify 
       }
     }
   }
