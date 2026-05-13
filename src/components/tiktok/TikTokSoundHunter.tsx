@@ -30,10 +30,16 @@ export default function TikTokSoundHunter() {
   async function handleCreateSound(e: React.FormEvent) {
     e.preventDefault()
     if (!newSoundName) return
-    const res = await createTikTokSound(newSoundName)
-    if (res.success) {
-      setNewSoundName('')
-      fetchSounds()
+    try {
+      const res = await createTikTokSound(newSoundName)
+      if (res.success) {
+        setNewSoundName('')
+        fetchSounds()
+      } else {
+        alert('Database fout: ' + res.error)
+      }
+    } catch (err: any) {
+      alert('Systeem fout: ' + err.message)
     }
   }
 
