@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { CsvImport } from '@/components/targets/CsvImport'
 import { ScreenshotImport } from '@/components/targets/ScreenshotImport'
 import { ContactCard } from '@/components/targets/ContactCard'
+import { BulkSearchButton } from '@/components/targets/BulkSearchButton'
 
 export default async function TargetsPage(props: { searchParams: Promise<{ sort?: string }> }) {
   const searchParams = await props.searchParams
@@ -41,6 +42,7 @@ export default async function TargetsPage(props: { searchParams: Promise<{ sort?
           <p className="text-slate-500 text-sm">Manage your promotional contacts and database.</p>
         </div>
         <div className="flex items-center gap-2">
+          <BulkSearchButton />
           <ScreenshotImport />
           <CsvImport />
           <Button asChild>
