@@ -1,0 +1,207 @@
+import { createClient } from '@/lib/supabase/server'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { addSupportEvent } from '@/app/actions/support'
+import { Mail, Globe, Hash, Calendar, Plus, Link as LinkIcon } from 'lucide-react'
+
+export default async function TargetDetailPage({ params }: { params: { id: string } }) {
+  const supabase = await createClient()
+
+  // Fetch Target
+  const { data: target } = await supabase
+    .from('targets')
+    .select('*')
+    .eq('id', params.id)
+    .single()
+
+  if (!target) {
+    return <div>Target not found</div>
+  }
+
+  // Fetch Support Events
+  const { data: supportEvents } = await supabase
+    .from('support_events')
+    .select('*, releases(title)')
+    .eq('target_id', target.id)
+    .order('date', { ascending: false })
+
+  // Fetch user's releases for the dropdown
+  const { data: releases } = await supabase
+    .from('releases')
+    .select('id, title')
+    .order('created_at', { ascending: false })
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            {target.name}
+            <Badge variant="outline" className="ml-2">{target.type}</Badge>
+          </h2>
+          <p className="text-slate-500 text-lg mt-1">{target.platform} • {target.country || 'No country'}</p>
+        </div>
+        <Badge variant={target.relationship_status === 'warm' ? 'default' : 'secondary'} className="text-sm px-4 py-1">
+          {target.relationship_status}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-1 space-y-6">
+          {/* Target Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3 text-sm">
+                <Mail className="h-4 w-4 text-slate-500" />
+                <span>{target.email || 'No email provided'}</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Globe className="h-4 w-4 text-slate-500" />
+                <span>{target.social_links?.spotify || target.social_links?.instagram || 'No links provided'}</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Hash className="h-4 w-4 text-slate-500" />
+                <span>Followers: {target.followers || 'Unknown'}</span>
+              </div>
+              
+              <div className="pt-4 border-t border-slate-100">
+                <h4 className="text-sm font-semibold mb-2">Notes</h4>
+                <p className="text-sm text-slate-600 whitespace-pre-wrap">{target.notes || 'No notes available.'}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Add Support Event Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Log Support</CardTitle>
+              <CardDescription>Track when this target supported a release.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={addSupportEvent} className="space-y-4">
+                <input type="hidden" name="target_id" value={target.id} />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="release_id">Release</Label>
+                  <Select name="release_id">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select release (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None / General</SelectItem>
+                      {releases?.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>{r.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="support_type">Type of Support</Label>
+                  <Select name="support_type" required defaultValue="playlist add">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="playlist add">Playlist Add</SelectItem>
+                      <SelectItem value="radio spin">Radio Spin</SelectItem>
+                      <SelectItem value="social post">Social Media Post</SelectItem>
+                      <SelectItem value="blogpost">Blog Post / Review</SelectItem>
+                      <SelectItem value="repost">Repost</SelectItem>
+                      <SelectItem value="dj support">DJ Support</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input id="date" name="date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="proof_link">Proof Link (URL)</Label>
+                  <Input id="proof_link" name="proof_link" type="url" placeholder="https://" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="estimated_impact">Estimated Impact / Reach</Label>
+                  <Input id="estimated_impact" name="estimated_impact" placeholder="e.g. 5k listeners" />
+                </div>
+
+                <Button type="submit" className="w-full">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Save Support Event
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="md:col-span-2">
+          {/* Support History */}
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Support History</CardTitle>
+              <CardDescription>A timeline of all recorded support from this target.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Release</TableHead>
+                    <TableHead>Support Type</TableHead>
+                    <TableHead>Impact</TableHead>
+                    <TableHead className="text-right">Proof</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {supportEvents && supportEvents.length > 0 ? (
+                    supportEvents.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell className="whitespace-nowrap">
+                          {event.date ? new Date(event.date).toLocaleDateString() : '-'}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {event.releases?.title || 'General'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{event.support_type}</Badge>
+                        </TableCell>
+                        <TableCell>{event.estimated_impact || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          {event.proof_link ? (
+                            <Button asChild variant="ghost" size="sm">
+                              <a href={event.proof_link} target="_blank" rel="noreferrer">
+                                <LinkIcon className="h-4 w-4 text-blue-500" />
+                              </a>
+                            </Button>
+                          ) : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center text-slate-500">
+                        No support history logged yet. Use the form to add an event.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
