@@ -33,9 +33,9 @@ export default function SpotifyFinderPage() {
       setError(result.error)
     } else {
       setResultData({
-        searchTermsUsed: result.searchTermsUsed,
-        totalFound: result.totalFound,
-        filteredCount: result.filteredCount,
+        searchTermsUsed: result.searchTermsUsed || [],
+        totalFound: result.totalFound || 0,
+        filteredCount: result.filteredCount || 0,
         savedPlaylists: result.savedPlaylists || []
       })
     }
