@@ -29,13 +29,16 @@ export function MobileNav({ user }: { user: any }) {
               <Disc className="h-6 w-6 text-[#dfb433]" /> Releases
             </Link>
             <Link href="/dashboard/targets" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
-              <Users className="h-6 w-6 text-[#dfb433]" /> Targets
+              <Search className="h-6 w-6 text-[#dfb433]" /> Spotify Lijsten
+            </Link>
+            <Link href="/dashboard/influencers" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Users className="h-6 w-6 text-[#dfb433]" /> Influencers
             </Link>
             <Link href="/dashboard/spotify" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
               <Search className="h-6 w-6 text-[#dfb433]" /> Spotify Finder
             </Link>
             <Link href="/dashboard/tiktok" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
-              <Video className="h-6 w-6 text-[#dfb433]" /> TikTok Hunter
+              <Video className="h-6 w-6 text-[#dfb433]" /> TikTok Sound Tracker
             </Link>
             
             <div className="mt-6 pt-6 border-t border-white/10">

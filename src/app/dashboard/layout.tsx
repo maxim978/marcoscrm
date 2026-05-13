@@ -68,13 +68,16 @@ function NavLinks() {
         <Disc className="h-5 w-5" /> Releases
       </Link>
       <Link href="/dashboard/targets" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
-        <Users className="h-5 w-5" /> Targets
+        <Search className="h-5 w-5" /> Spotify Lijsten
+      </Link>
+      <Link href="/dashboard/influencers" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
+        <Users className="h-5 w-5" /> Influencers
       </Link>
       <Link href="/dashboard/spotify" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Search className="h-5 w-5" /> Spotify Finder
       </Link>
       <Link href="/dashboard/tiktok" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
-        <Video className="h-5 w-5" /> TikTok Hunter
+        <Video className="h-5 w-5" /> TikTok Sound Tracker
       </Link>
     </>
   )
