@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { DjList } from '@/components/djs/DjList'
 import { DjCsvImport } from '@/components/djs/DjCsvImport'
+import { DeleteAllDjsButton } from '@/components/djs/DeleteAllDjsButton'
 
 export default async function DjsPage() {
   const supabase = await createClient()
@@ -27,6 +28,7 @@ export default async function DjsPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+          <DeleteAllDjsButton />
           <DjCsvImport />
           <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 px-6 font-bold flex-1 md:flex-none h-11">
             <Link href="/dashboard/djs/new">
