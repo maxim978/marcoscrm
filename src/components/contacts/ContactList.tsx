@@ -17,9 +17,9 @@ import {
   Globe, 
   Mail, 
   Phone,
-  Instagram,
-  Facebook,
-  Music2
+  Camera,
+  Link,
+  Music
 } from 'lucide-react'
 import { 
   Dialog, 
@@ -110,12 +110,12 @@ export function ContactList({ initialContacts }: { initialContacts: any[] }) {
             <div className="flex gap-2 mt-1">
               {contact.instagram && (
                 <a href={contact.instagram} target="_blank" rel="noreferrer" className="bg-pink-50 p-2 rounded-lg text-pink-600">
-                  <Instagram className="h-4 w-4" />
+                  <Camera className="h-4 w-4" />
                 </a>
               )}
               {contact.tiktok && (
                 <a href={contact.tiktok} target="_blank" rel="noreferrer" className="bg-slate-50 p-2 rounded-lg text-slate-900">
-                  <Music2 className="h-4 w-4" />
+                  <Music className="h-4 w-4" />
                 </a>
               )}
               {contact.spotify && (
@@ -153,12 +153,12 @@ export function ContactList({ initialContacts }: { initialContacts: any[] }) {
                   <div className="flex gap-1">
                     {contact.instagram && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-pink-50 text-pink-600">
-                        <a href={contact.instagram} target="_blank" rel="noreferrer"><Instagram className="h-4 w-4" /></a>
+                        <a href={contact.instagram} target="_blank" rel="noreferrer"><Camera className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {contact.tiktok && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 text-slate-900">
-                        <a href={contact.tiktok} target="_blank" rel="noreferrer"><Music2 className="h-4 w-4" /></a>
+                        <a href={contact.tiktok} target="_blank" rel="noreferrer"><Music className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {contact.spotify && (

@@ -16,9 +16,9 @@ import {
   Trash2, 
   Globe, 
   User,
-  Instagram,
-  Youtube,
-  Music2,
+  Camera,
+  Video,
+  Music,
   ExternalLink
 } from 'lucide-react'
 import { 
@@ -109,17 +109,17 @@ export function ChannelList({ initialChannels }: { initialChannels: any[] }) {
             <div className="flex gap-2 mt-1">
               {channel.instagram && (
                 <a href={channel.instagram} target="_blank" rel="noreferrer" className="bg-pink-50 p-2 rounded-lg text-pink-600">
-                  <Instagram className="h-4 w-4" />
+                  <Camera className="h-4 w-4" />
                 </a>
               )}
               {channel.tiktok && (
                 <a href={channel.tiktok} target="_blank" rel="noreferrer" className="bg-slate-50 p-2 rounded-lg text-slate-900">
-                  <Music2 className="h-4 w-4" />
+                  <Music className="h-4 w-4" />
                 </a>
               )}
               {channel.youtube && (
                 <a href={channel.youtube} target="_blank" rel="noreferrer" className="bg-red-50 p-2 rounded-lg text-red-600">
-                  <Youtube className="h-4 w-4" />
+                  <Video className="h-4 w-4" />
                 </a>
               )}
             </div>
@@ -153,17 +153,17 @@ export function ChannelList({ initialChannels }: { initialChannels: any[] }) {
                   <div className="flex gap-1">
                     {channel.instagram && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-pink-50 text-pink-600">
-                        <a href={channel.instagram} target="_blank" rel="noreferrer"><Instagram className="h-4 w-4" /></a>
+                        <a href={channel.instagram} target="_blank" rel="noreferrer"><Camera className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {channel.tiktok && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 text-slate-900">
-                        <a href={channel.tiktok} target="_blank" rel="noreferrer"><Music2 className="h-4 w-4" /></a>
+                        <a href={channel.tiktok} target="_blank" rel="noreferrer"><Music className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {channel.youtube && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-red-50 text-red-600">
-                        <a href={channel.youtube} target="_blank" rel="noreferrer"><Youtube className="h-4 w-4" /></a>
+                        <a href={channel.youtube} target="_blank" rel="noreferrer"><Video className="h-4 w-4" /></a>
                       </Button>
                     )}
                   </div>
