@@ -41,6 +41,12 @@ export function DjList({ initialDjs }: { initialDjs: any[] }) {
     setDjs(initialDjs)
   }, [initialDjs])
 
+  const formatUrl = (url: string) => {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://')) return url
+    return `https://${url}`
+  }
+
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je deze DJ wilt verwijderen?')) return
     const res = await deleteDj(id)
@@ -105,7 +111,7 @@ export function DjList({ initialDjs }: { initialDjs: any[] }) {
               {dj.website && (
                 <div className="flex items-center gap-2 text-sm text-indigo-600 font-bold">
                   <Globe className="h-4 w-4" /> 
-                  <a href={dj.website} target="_blank" rel="noreferrer" className="hover:underline">Website</a>
+                  <a href={formatUrl(dj.website)} target="_blank" rel="noreferrer" className="hover:underline">Website</a>
                 </div>
               )}
             </div>
@@ -133,7 +139,7 @@ export function DjList({ initialDjs }: { initialDjs: any[] }) {
                 </TableCell>
                 <TableCell>
                   {dj.website ? (
-                    <a href={dj.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-indigo-600 font-bold hover:underline">
+                    <a href={formatUrl(dj.website)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-indigo-600 font-bold hover:underline">
                       <ExternalLink className="h-3.5 w-3.5" /> Site
                     </a>
                   ) : (

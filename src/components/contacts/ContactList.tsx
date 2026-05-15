@@ -42,6 +42,12 @@ export function ContactList({ initialContacts }: { initialContacts: any[] }) {
     setContacts(initialContacts)
   }, [initialContacts])
 
+  const formatUrl = (url: string) => {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://')) return url
+    return `https://${url}`
+  }
+
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit contact wilt verwijderen?')) return
     const res = await deleteContact(id)
@@ -109,17 +115,17 @@ export function ContactList({ initialContacts }: { initialContacts: any[] }) {
 
             <div className="flex gap-2 mt-1">
               {contact.instagram && (
-                <a href={contact.instagram} target="_blank" rel="noreferrer" className="bg-pink-50 p-2 rounded-lg text-pink-600">
+                <a href={formatUrl(contact.instagram)} target="_blank" rel="noreferrer" className="bg-pink-50 p-2 rounded-lg text-pink-600">
                   <Camera className="h-4 w-4" />
                 </a>
               )}
               {contact.tiktok && (
-                <a href={contact.tiktok} target="_blank" rel="noreferrer" className="bg-slate-50 p-2 rounded-lg text-slate-900">
+                <a href={formatUrl(contact.tiktok)} target="_blank" rel="noreferrer" className="bg-slate-50 p-2 rounded-lg text-slate-900">
                   <Music className="h-4 w-4" />
                 </a>
               )}
               {contact.spotify && (
-                <a href={contact.spotify} target="_blank" rel="noreferrer" className="bg-green-50 p-2 rounded-lg text-green-600">
+                <a href={formatUrl(contact.spotify)} target="_blank" rel="noreferrer" className="bg-green-50 p-2 rounded-lg text-green-600">
                   <Globe className="h-4 w-4" />
                 </a>
               )}
@@ -153,17 +159,17 @@ export function ContactList({ initialContacts }: { initialContacts: any[] }) {
                   <div className="flex gap-1">
                     {contact.instagram && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-pink-50 text-pink-600">
-                        <a href={contact.instagram} target="_blank" rel="noreferrer"><Camera className="h-4 w-4" /></a>
+                        <a href={formatUrl(contact.instagram)} target="_blank" rel="noreferrer"><Camera className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {contact.tiktok && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 text-slate-900">
-                        <a href={contact.tiktok} target="_blank" rel="noreferrer"><Music className="h-4 w-4" /></a>
+                        <a href={formatUrl(contact.tiktok)} target="_blank" rel="noreferrer"><Music className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {contact.spotify && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-green-50 text-green-600">
-                        <a href={contact.spotify} target="_blank" rel="noreferrer"><Globe className="h-4 w-4" /></a>
+                        <a href={formatUrl(contact.spotify)} target="_blank" rel="noreferrer"><Globe className="h-4 w-4" /></a>
                       </Button>
                     )}
                   </div>

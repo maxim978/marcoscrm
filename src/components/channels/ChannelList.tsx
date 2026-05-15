@@ -42,6 +42,12 @@ export function ChannelList({ initialChannels }: { initialChannels: any[] }) {
     setChannels(initialChannels)
   }, [initialChannels])
 
+  const formatUrl = (url: string) => {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://')) return url
+    return `https://${url}`
+  }
+
   const handleDelete = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit kanaal wilt verwijderen?')) return
     const res = await deleteChannel(id)
@@ -101,24 +107,24 @@ export function ChannelList({ initialChannels }: { initialChannels: any[] }) {
               {channel.website && (
                 <div className="flex items-center gap-2 text-sm text-[#3071d8] font-bold">
                   <ExternalLink className="h-4 w-4" /> 
-                  <a href={channel.website} target="_blank" rel="noreferrer">Website</a>
+                  <a href={formatUrl(channel.website)} target="_blank" rel="noreferrer">Website</a>
                 </div>
               )}
             </div>
 
             <div className="flex gap-2 mt-1">
               {channel.instagram && (
-                <a href={channel.instagram} target="_blank" rel="noreferrer" className="bg-pink-50 p-2 rounded-lg text-pink-600">
+                <a href={formatUrl(channel.instagram)} target="_blank" rel="noreferrer" className="bg-pink-50 p-2 rounded-lg text-pink-600">
                   <Camera className="h-4 w-4" />
                 </a>
               )}
               {channel.tiktok && (
-                <a href={channel.tiktok} target="_blank" rel="noreferrer" className="bg-slate-50 p-2 rounded-lg text-slate-900">
+                <a href={formatUrl(channel.tiktok)} target="_blank" rel="noreferrer" className="bg-slate-50 p-2 rounded-lg text-slate-900">
                   <Music className="h-4 w-4" />
                 </a>
               )}
               {channel.youtube && (
-                <a href={channel.youtube} target="_blank" rel="noreferrer" className="bg-red-50 p-2 rounded-lg text-red-600">
+                <a href={formatUrl(channel.youtube)} target="_blank" rel="noreferrer" className="bg-red-50 p-2 rounded-lg text-red-600">
                   <Video className="h-4 w-4" />
                 </a>
               )}
@@ -153,17 +159,17 @@ export function ChannelList({ initialChannels }: { initialChannels: any[] }) {
                   <div className="flex gap-1">
                     {channel.instagram && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-pink-50 text-pink-600">
-                        <a href={channel.instagram} target="_blank" rel="noreferrer"><Camera className="h-4 w-4" /></a>
+                        <a href={formatUrl(channel.instagram)} target="_blank" rel="noreferrer"><Camera className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {channel.tiktok && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 text-slate-900">
-                        <a href={channel.tiktok} target="_blank" rel="noreferrer"><Music className="h-4 w-4" /></a>
+                        <a href={formatUrl(channel.tiktok)} target="_blank" rel="noreferrer"><Music className="h-4 w-4" /></a>
                       </Button>
                     )}
                     {channel.youtube && (
                       <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-red-50 text-red-600">
-                        <a href={channel.youtube} target="_blank" rel="noreferrer"><Video className="h-4 w-4" /></a>
+                        <a href={formatUrl(channel.youtube)} target="_blank" rel="noreferrer"><Video className="h-4 w-4" /></a>
                       </Button>
                     )}
                   </div>
