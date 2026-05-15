@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu, X, Home, Disc, Users, Search, Video, LogOut } from 'lucide-react'
+import { Menu, X, Home, Disc, Users, Search, Video, LogOut, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
 
@@ -33,6 +33,12 @@ export function MobileNav({ user }: { user: any }) {
             </Link>
             <Link href="/dashboard/influencers" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
               <Users className="h-6 w-6 text-[#dfb433]" /> Influencers
+            </Link>
+            <Link href="/dashboard/contacts" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Users className="h-6 w-6 text-[#dfb433]" /> Algemene Contacten
+            </Link>
+            <Link href="/dashboard/channels" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
+              <Globe className="h-6 w-6 text-[#dfb433]" /> Grote Kanalen
             </Link>
             <Link href="/dashboard/spotify" onClick={toggle} className="flex items-center gap-4 rounded-xl px-4 py-4 text-white hover:bg-white/10 active:bg-white/20 transition-colors font-bold">
               <Search className="h-6 w-6 text-[#dfb433]" /> Spotify Finder
