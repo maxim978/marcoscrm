@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Disc, Users, Settings, LogOut, Search, Video, Menu, X, Globe, Music } from 'lucide-react'
+import { Home, Disc, Users, Settings, LogOut, Search, Video, Menu, X, Globe, Music, Radio } from 'lucide-react'
 import { logout } from '../actions/auth'
 
 export default async function DashboardLayout({
@@ -81,6 +81,9 @@ function NavLinks() {
       </Link>
       <Link href="/dashboard/djs" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Music className="h-5 w-5" /> DJ's
+      </Link>
+      <Link href="/dashboard/radio" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
+        <Radio className="h-5 w-5" /> Radiostations
       </Link>
       <Link href="/dashboard/spotify" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Search className="h-5 w-5" /> Spotify Finder
