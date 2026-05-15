@@ -372,7 +372,7 @@ Polka & schlager hosts`)
           Importeer Radio Lijst
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] rounded-2xl">
+      <DialogContent className="sm:max-w-[600px] rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black">Radio Stations Importeren</DialogTitle>
           <DialogDescription className="font-medium text-slate-500">
@@ -384,7 +384,7 @@ Polka & schlager hosts`)
             placeholder="1. Radio 538&#10;Bekende DJ's / shows:&#10;Frank Dane&#10;Wietze de Jager&#10;...&#10;2. Qmusic&#10;..."
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="min-h-[300px] rounded-xl font-mono text-sm p-4 bg-slate-50 border-slate-200"
+            className="h-[400px] rounded-xl font-mono text-xs p-4 bg-slate-50 border-slate-200 resize-none"
             disabled={isImporting}
           />
           
