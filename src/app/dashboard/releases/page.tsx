@@ -56,16 +56,24 @@ export default async function ReleasesPage() {
           <TableBody>
             {releases && releases.length > 0 ? (
               releases.map((release) => (
-                <TableRow key={release.id}>
-                  <TableCell className="font-medium">{release.title}</TableCell>
-                  <TableCell>{release.artists?.name}</TableCell>
-                  <TableCell>{release.release_date ? new Date(release.release_date).toLocaleDateString() : 'TBA'}</TableCell>
+                <TableRow key={release.id} className="cursor-pointer hover:bg-slate-50">
+                  <TableCell className="font-medium">
+                    <Link href={`/dashboard/releases/${release.id}`} className="block w-full">{release.title}</Link>
+                  </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{release.status}</Badge>
+                    <Link href={`/dashboard/releases/${release.id}`} className="block w-full">{release.artists?.name}</Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link href={`/dashboard/releases/${release.id}`} className="block w-full">{release.release_date ? new Date(release.release_date).toLocaleDateString() : 'TBA'}</Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link href={`/dashboard/releases/${release.id}`} className="block w-full">
+                      <Badge variant="outline">{release.status}</Badge>
+                    </Link>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={`/dashboard/releases/${release.id}`}>Manage Hitlist</Link>
+                      <Link href={`/dashboard/releases/${release.id}`}>Open →</Link>
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { generateHitlist } from '@/app/actions/hitlist'
+import { getStreamWeeks, getPlaylistSaves } from '@/app/actions/release-stats'
 import { HitlistRow } from '@/components/releases/HitlistRow'
 import { PlaylistPlacementForm } from '@/components/releases/PlaylistPlacementForm'
 import { GenerateHitlistButton } from '@/components/releases/GenerateHitlistButton'
+import { StreamsChart } from '@/components/releases/StreamsChart'
+import { PlaylistSavesChart } from '@/components/releases/PlaylistSavesChart'
 import { Play, Disc, Calendar, Hash } from 'lucide-react'
 
-export default async function ReleaseDetailPage({ params }: { params: { id: string } }) {
+export default async function ReleaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: release } = await supabase
@@ -18,7 +22,7 @@ export default async function ReleaseDetailPage({ params }: { params: { id: stri
       *,
       artists ( name )
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!release) {
@@ -43,6 +47,11 @@ export default async function ReleaseDetailPage({ params }: { params: { id: stri
     .order('priority_score', { ascending: false })
 
   const generateAction = generateHitlist.bind(null, release.id)
+
+  const [streamWeeks, playlistSaves] = await Promise.all([
+    getStreamWeeks(release.id).catch(() => []),
+    getPlaylistSaves(release.id).catch(() => []),
+  ])
 
   const { data: placements } = await supabase
     .from('support_events')
@@ -159,6 +168,26 @@ export default async function ReleaseDetailPage({ params }: { params: { id: stri
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Streams per week</CardTitle>
+          <p className="text-sm text-slate-500 mt-1">Voer per week het aantal streams per dag in. Elke week verschijnt als aparte lijn in de grafiek.</p>
+        </CardHeader>
+        <CardContent>
+          <StreamsChart releaseId={release.id} initialWeeks={streamWeeks} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Playlist saves</CardTitle>
+          <p className="text-sm text-slate-500 mt-1">Cumulatief aantal saves per dag. De dagelijkse stijging wordt automatisch berekend.</p>
+        </CardHeader>
+        <CardContent>
+          <PlaylistSavesChart releaseId={release.id} initialSaves={playlistSaves} />
         </CardContent>
       </Card>
 

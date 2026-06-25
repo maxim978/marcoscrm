@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Music, Plus, Loader2, ExternalLink, Heart, Eye, Users, Trash2 } from 'lucide-react'
 import { createTikTokSound, addTikTokVideoToSound, getTikTokSounds, addTikTokVideoManually, updateTikTokVideo, deleteTikTokVideo } from '@/app/actions/tiktok-tracker'
+import { CreatorsSection } from '@/components/tiktok/CreatorsSection'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
@@ -223,14 +224,38 @@ export default function TikTokSoundHunter() {
             </div>
 
             <CardContent className="p-0">
-              <TikTokVideoList 
-                videos={sound.tiktok_videos || []} 
+              <CreatorsSection
+                soundId={sound.id}
+                soundName={sound.name}
+                initialCreators={sound.tiktok_creators || []}
+              />
+              <CollapsibleVideoList
+                videos={sound.tiktok_videos || []}
                 onRefresh={fetchSounds}
               />
             </CardContent>
           </Card>
         ))}
       </div>
+    </div>
+  )
+}
+
+function CollapsibleVideoList({ videos, onRefresh }: { videos: any[], onRefresh: () => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-t border-slate-100">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-6 py-3 bg-slate-50/40 hover:bg-slate-100/60 transition-colors text-sm"
+      >
+        <div className="flex items-center gap-3">
+          <Music className="h-4 w-4 text-slate-400" />
+          <span className="font-bold text-slate-500">Video&apos;s ({videos.length})</span>
+        </div>
+        {open ? <ChevronLeft className="h-4 w-4 text-slate-300 rotate-90" /> : <ChevronRight className="h-4 w-4 text-slate-300 rotate-90" />}
+      </button>
+      {open && <TikTokVideoList videos={videos} onRefresh={onRefresh} />}
     </div>
   )
 }

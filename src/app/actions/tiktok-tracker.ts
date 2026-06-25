@@ -155,7 +155,7 @@ export async function getTikTokSounds() {
 
   const { data } = await supabase
     .from('tiktok_sounds')
-    .select('*, tiktok_videos(*)')
+    .select('*, tiktok_videos(*), tiktok_creators(*)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
