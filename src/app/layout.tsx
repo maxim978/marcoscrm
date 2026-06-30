@@ -11,6 +11,15 @@ const firaSans = Fira_Sans({
 export const metadata: Metadata = {
   title: "Marcos CRM",
   description: "Artist Release CRM and Intelligence Platform",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Marcos",
+  },
+  icons: {
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

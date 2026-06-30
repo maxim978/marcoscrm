@@ -70,164 +70,149 @@ export default async function ReleaseDetailPage({ params }: { params: Promise<{ 
     .order('date', { ascending: false })
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Disc className="h-6 w-6 text-slate-500" />
-            {release.title}
-          </h2>
-          <p className="text-slate-500 text-lg mt-1">{release.artists?.name}</p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-bold tracking-tight truncate">{release.title}</h2>
+          <p className="text-slate-500 mt-0.5">{release.artists?.name}</p>
         </div>
-        <Badge variant={release.status === 'live' ? 'default' : 'outline'} className="text-sm px-4 py-1">
+        <Badge variant={release.status === 'live' ? 'default' : 'outline'} className="shrink-0 mt-1">
           {release.status}
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="py-4 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Release Date</CardTitle>
-            <Calendar className="h-4 w-4 text-slate-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">
-              {release.release_date ? new Date(release.release_date).toLocaleDateString() : 'TBA'}
-            </div>
+      {/* Meta grid */}
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-3 px-4">
+            <p className="text-xs text-slate-400 font-medium mb-1">Datum</p>
+            <p className="font-bold text-sm">
+              {release.release_date ? new Date(release.release_date).toLocaleDateString('nl-NL') : 'TBA'}
+            </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="py-4 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Genre</CardTitle>
-            <Hash className="h-4 w-4 text-slate-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{release.genre || '-'}</div>
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-3 px-4">
+            <p className="text-xs text-slate-400 font-medium mb-1">Genre</p>
+            <p className="font-bold text-sm truncate">{release.genre || '-'}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="py-4 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Mood</CardTitle>
-            <Hash className="h-4 w-4 text-slate-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{release.mood || '-'}</div>
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-3 px-4">
+            <p className="text-xs text-slate-400 font-medium mb-1">Mood</p>
+            <p className="font-bold text-sm truncate">{release.mood || '-'}</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Playlist Placements */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <div>
             <CardTitle>Playlist Placements</CardTitle>
             <p className="text-sm text-slate-500 mt-1">Track where this release has been added.</p>
           </div>
           <PlaylistPlacementForm releaseId={release.id} />
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Playlist Name</TableHead>
-                <TableHead>Curator</TableHead>
-                <TableHead>Followers</TableHead>
-                <TableHead>Date Added</TableHead>
-                <TableHead className="text-right">Link</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {placements && placements.length > 0 ? (
-                placements.map((item: any) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.targets.name}</TableCell>
-                    <TableCell>{item.targets.contact_name || '-'}</TableCell>
-                    <TableCell>{item.targets.followers?.toLocaleString() || '0'}</TableCell>
-                    <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      {item.targets.social_links?.link || item.targets.social_links?.spotify ? (
-                        <a 
-                          href={item.targets.social_links.link || item.targets.social_links.spotify} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="text-blue-500 hover:underline"
-                        >
-                          View List
-                        </a>
-                      ) : (
-                        <span className="text-slate-300">-</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-slate-500">
-                    No placements logged yet. Click &quot;Add Placement&quot; to log your first playlist addition!
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <CardContent className="p-0">
+          {placements && placements.length > 0 ? (
+            <div className="divide-y divide-slate-50">
+              {placements.map((item: any) => (
+                <div key={item.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-800 truncate">{item.targets.name}</p>
+                    <p className="text-xs text-slate-400">
+                      {item.targets.contact_name || '—'}
+                      <span className="mx-1">·</span>
+                      {item.targets.followers?.toLocaleString('nl-NL') || '0'} volgers
+                      <span className="mx-1">·</span>
+                      {new Date(item.date).toLocaleDateString('nl-NL')}
+                    </p>
+                  </div>
+                  {(item.targets.social_links?.link || item.targets.social_links?.spotify) && (
+                    <a
+                      href={item.targets.social_links.link || item.targets.social_links.spotify}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#3071d8] text-xs font-semibold shrink-0 hover:underline"
+                    >
+                      Open →
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-10 text-center text-slate-300 text-sm">
+              Nog geen placements
+            </div>
+          )}
         </CardContent>
       </Card>
 
+      {/* Streams */}
       <Card>
         <CardHeader>
           <CardTitle>Streams per week</CardTitle>
-          <p className="text-sm text-slate-500 mt-1">Voer per week het aantal streams per dag in. Elke week verschijnt als aparte lijn in de grafiek.</p>
+          <p className="text-sm text-slate-500 mt-1">Voer per week het aantal streams per dag in.</p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 sm:px-6">
           <StreamsChart releaseId={release.id} initialWeeks={streamWeeks} />
         </CardContent>
       </Card>
 
+      {/* Playlist saves */}
       <Card>
         <CardHeader>
           <CardTitle>Playlist saves</CardTitle>
-          <p className="text-sm text-slate-500 mt-1">Cumulatief aantal saves per dag. De dagelijkse stijging wordt automatisch berekend.</p>
+          <p className="text-sm text-slate-500 mt-1">Cumulatief per dag, stijging automatisch berekend.</p>
         </CardHeader>
         <CardContent>
           <PlaylistSavesChart releaseId={release.id} initialSaves={playlistSaves} />
         </CardContent>
       </Card>
 
+      {/* Hitlist */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <div>
             <CardTitle>Promotional Hitlist</CardTitle>
-            <p className="text-sm text-slate-500 mt-1">Targets selected for this release campaign.</p>
+            <p className="text-sm text-slate-500 mt-1">Targets voor deze release.</p>
           </div>
-          <GenerateHitlistButton 
-            releaseId={release.id} 
-            hasHitlist={!!(hitlist && hitlist.length > 0)} 
+          <GenerateHitlistButton
+            releaseId={release.id}
+            hasHitlist={!!(hitlist && hitlist.length > 0)}
           />
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Target Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Relationship</TableHead>
-                <TableHead>Match Score</TableHead>
-                <TableHead>Outreach Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {hitlist && hitlist.length > 0 ? (
-                hitlist.map((item) => (
-                  <HitlistRow key={item.id} item={item} releaseId={release.id} />
-                ))
-              ) : (
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-slate-500">
-                    No targets in hitlist. Click &quot;Maak Hitlist&quot; to generate your targets automatically based on genres, moods, and relationships.
-                  </TableCell>
+                  <TableHead>Naam</TableHead>
+                  <TableHead className="hidden sm:table-cell">Type</TableHead>
+                  <TableHead className="hidden md:table-cell">Relatie</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actie</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {hitlist && hitlist.length > 0 ? (
+                  hitlist.map((item) => (
+                    <HitlistRow key={item.id} item={item} releaseId={release.id} />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-20 text-center text-slate-400 text-sm">
+                      Nog geen targets. Klik &quot;Maak Hitlist&quot; om automatisch te genereren.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

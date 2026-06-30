@@ -131,7 +131,7 @@ export function StreamsChart({ releaseId, initialWeeks }: Props) {
       )}
 
       {/* Invoertabel */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
