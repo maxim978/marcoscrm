@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Disc, Users, Settings, LogOut, Search, Video, Menu, X, Globe, Music, Radio } from 'lucide-react'
+import { Home, Disc, Users, Settings, LogOut, Search, Video, Menu, X, Globe, Music, Radio, BarChart2 } from 'lucide-react'
 import { logout } from '../actions/auth'
 
 export default async function DashboardLayout({
@@ -88,6 +88,9 @@ function NavLinks() {
       </Link>
       <Link href="/dashboard/tiktok" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
         <Video className="h-5 w-5" /> TikTok Sound Tracker
+      </Link>
+      <Link href="/dashboard/tiktok-ads" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-blue-50 hover:bg-[#dfb433] hover:text-slate-900 transition-all font-medium">
+        <BarChart2 className="h-5 w-5" /> TikTok Ads
       </Link>
     </>
   )

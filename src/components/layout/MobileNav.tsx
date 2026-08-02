@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import {
   Home, Disc, Video, Music, X, LogOut,
-  Users, Search, Globe, Radio, Menu, Zap, Shield,
+  Users, Search, Globe, Radio, Menu, Zap, Shield, BarChart2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -28,6 +28,7 @@ const ALL_NAV = [
   { href: '/dashboard/radio', icon: Radio, label: 'Radiostations' },
   { href: '/dashboard/spotify', icon: Search, label: 'Spotify Finder' },
   { href: '/dashboard/tiktok', icon: Video, label: 'TikTok Sound Tracker' },
+  { href: '/dashboard/tiktok-ads', icon: BarChart2, label: 'TikTok Ads' },
   { href: '/salesmachine', icon: Zap, label: 'Salesmachine' },
 ]
 
