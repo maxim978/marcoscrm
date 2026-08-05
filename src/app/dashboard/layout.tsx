@@ -17,34 +17,34 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-slate-50">
+    <div className="flex flex-col md:flex-row bg-slate-50 min-h-screen md:h-screen md:overflow-hidden">
       {/* Mobile Header */}
-      <div className="md:hidden bg-[#3071d8] border-b border-white/10 px-5 flex items-center sticky top-0 z-40 h-16">
+      <div className="md:hidden bg-[#3071d8] border-b border-white/10 px-5 flex items-center sticky top-0 z-40 h-16 flex-shrink-0">
         <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-10 w-auto" />
       </div>
       <MobileNav user={user} />
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 bg-[#3071d8] text-white flex-col flex-shrink-0 sticky top-0 h-screen shadow-xl">
-        <div className="p-6 flex justify-center bg-white border-b border-slate-100 mb-2">
+      <aside className="hidden md:flex w-64 bg-[#3071d8] text-white flex-col flex-shrink-0 overflow-y-auto shadow-xl">
+        <div className="p-6 flex justify-center bg-white border-b border-slate-100 mb-2 flex-shrink-0">
           <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-10 w-auto" />
         </div>
-        <nav className="flex flex-col gap-1 p-4">
+        <nav className="flex flex-col gap-1 p-4 flex-1">
           <NavLinks />
         </nav>
-        <div className="mt-auto p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-white/20 flex-shrink-0">
           <SignOutButton />
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 relative">
+      <main className="flex-1 md:overflow-y-auto relative flex flex-col">
         {/* Desktop Topbar */}
-        <header className="hidden md:flex bg-white border-b border-slate-200 h-16 items-center justify-between px-6 sticky top-0 z-40">
+        <header className="hidden md:flex bg-white border-b border-slate-200 h-16 items-center justify-between px-6 flex-shrink-0 z-40">
           <h2 className="text-lg font-medium text-slate-800">Welcome, {user.user_metadata?.name || user.email}</h2>
         </header>
-        
-        <div className="p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto">
+
+        <div className="p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto w-full">
           {children}
         </div>
       </main>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { PenLine } from 'lucide-react'
 import { KpiCard } from './KpiCard'
 import { PerformanceChart } from './PerformanceChart'
 import { CampaignsTable } from './CampaignsTable'
@@ -72,6 +74,35 @@ export function TikTokAdsDashboard({ initialData, isMockMode }: TikTokAdsDashboa
 
   return (
     <div className="space-y-6">
+      {/* Page hero */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#010101] via-[#1a1a2e] to-[#16213e] px-6 py-6 text-white shadow-lg">
+        {/* TikTok colored stripes */}
+        <div className="absolute right-0 top-0 h-full w-32 opacity-20">
+          <div className="absolute right-8 top-0 h-full w-1 bg-[#fe2c55]" />
+          <div className="absolute right-12 top-0 h-full w-1 bg-[#25f4ee]" />
+        </div>
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center flex-shrink-0 border border-white/20">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.2 8.2 0 0 0 4.79 1.52V6.75a4.85 4.85 0 0 1-1.02-.06z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">TikTok Ads Dashboard</h1>
+              <p className="text-white/60 text-sm mt-0.5">Performance overzicht van je advertentiecampagnes</p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/tiktok-ads/invoer"
+            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-colors shrink-0"
+          >
+            <PenLine className="h-4 w-4" />
+            Cijfers invoeren
+          </Link>
+        </div>
+      </div>
+
       {isMockMode && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
           <span className="text-amber-600 text-sm font-medium">
