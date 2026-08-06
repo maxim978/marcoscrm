@@ -11,7 +11,7 @@ export default async function TikTokAdsInvoerPage() {
   if (!user) redirect('/login')
 
   const [{ data: campaigns }, { data: adsets }, { data: entries }] = await Promise.all([
-    supabase.from('tiktok_campaigns').select('*').eq('user_id', user.id).order('created_at'),
+    supabase.from('tiktok_manual_campaigns').select('*').eq('user_id', user.id).order('created_at'),
     supabase.from('tiktok_adsets').select('*').eq('user_id', user.id).order('order_num'),
     supabase.from('tiktok_adset_entries').select('*').eq('user_id', user.id).order('datum', { ascending: false }),
   ])

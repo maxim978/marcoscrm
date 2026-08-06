@@ -38,7 +38,7 @@ export interface AdSetEntry {
 export async function getCampaigns(): Promise<Campaign[]> {
   const supabase = await createClient()
   const { data } = await supabase
-    .from('tiktok_campaigns')
+    .from('tiktok_manual_campaigns')
     .select('*')
     .order('created_at')
   return data ?? []
@@ -50,7 +50,7 @@ export async function createCampaign(name: string): Promise<{ id?: string; error
   if (!user) return { error: 'Niet ingelogd' }
 
   const { data, error } = await supabase
-    .from('tiktok_campaigns')
+    .from('tiktok_manual_campaigns')
     .insert({ user_id: user.id, name })
     .select('id')
     .single()
@@ -63,7 +63,7 @@ export async function createCampaign(name: string): Promise<{ id?: string; error
 export async function renameCampaign(id: string, name: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase
-    .from('tiktok_campaigns')
+    .from('tiktok_manual_campaigns')
     .update({ name })
     .eq('id', id)
 
@@ -75,7 +75,7 @@ export async function renameCampaign(id: string, name: string): Promise<{ error?
 export async function deleteCampaign(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase
-    .from('tiktok_campaigns')
+    .from('tiktok_manual_campaigns')
     .delete()
     .eq('id', id)
 
@@ -96,7 +96,7 @@ export async function saveAdSetsForCampaign(
 
   // Keep campaign name in sync for legacy compatibility
   const { data: campaign } = await supabase
-    .from('tiktok_campaigns')
+    .from('tiktok_manual_campaigns')
     .select('name')
     .eq('id', campaign_id)
     .single()
