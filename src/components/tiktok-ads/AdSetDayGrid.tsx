@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Loader2, Save, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { upsertAdSetEntry, deleteAdSetEntriesByDate } from '@/app/actions/tiktok-ads-structure'
+
 import type { AdSet, AdSetEntry } from '@/app/actions/tiktok-ads-structure'
 
 type MetricKey = keyof Omit<AdSetEntry, 'id' | 'adset_id' | 'datum'>
@@ -80,7 +81,7 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
 
   async function handleDelete() {
     setDeleting(true)
-    await deleteAdSetEntriesByDate(datum)
+    await deleteAdSetEntriesByDate(datum, adsets.map(a => a.id))
     onDelete(datum)
   }
 
