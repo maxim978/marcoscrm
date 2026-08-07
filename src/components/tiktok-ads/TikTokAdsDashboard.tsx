@@ -84,11 +84,21 @@ function ReleaseCampaignCard({ campaign, adsetEntries, campaignDaily, from, to }
   const filteredEntries = useMemo(() => adsetEntries.filter(e => inRange(e.datum)), [adsetEntries, from, to])
   const filteredDaily   = useMemo(() => campaignDaily.filter(d => inRange(d.datum)), [campaignDaily, from, to])
 
-  // Summary stats
-  const totalSpend     = filteredEntries.reduce((s, e) => s + (e.spend     ?? 0), 0)
-  const totalFollowers = filteredEntries.reduce((s, e) => s + (e.followers ?? 0), 0)
-  const totalStreams    = filteredDaily.reduce((s, d) => s + (d.streams        ?? 0), 0)
-  const totalPlaylists = filteredDaily.reduce((s, d) => s + (d.playlist_saves ?? 0), 0)
+  // All stats for this release
+  const stats = useMemo(() => {
+    const totalSpend     = filteredEntries.reduce((s, e) => s + (e.spend      ?? 0), 0)
+    const totalImpr      = filteredEntries.reduce((s, e) => s + (e.impressions ?? 0), 0)
+    const totalFollowers = filteredEntries.reduce((s, e) => s + (e.followers   ?? 0), 0)
+    const rates          = filteredEntries.map(e => e.result_rate ?? 0).filter(r => r > 0)
+    const totalStreams    = filteredDaily.reduce((s, d) => s + (d.streams        ?? 0), 0)
+    const totalPlaylists = filteredDaily.reduce((s, d) => s + (d.playlist_saves ?? 0), 0)
+    return {
+      totalSpend, totalImpr, totalFollowers, totalStreams, totalPlaylists,
+      avgCpm:         totalImpr      > 0 ? (totalSpend / totalImpr) * 1000         : 0,
+      avgCostPerFoll: totalFollowers > 0 ? totalSpend / totalFollowers              : 0,
+      avgResultRate:  rates.length   > 0 ? rates.reduce((a,b) => a+b) / rates.length : 0,
+    }
+  }, [filteredEntries, filteredDaily])
 
   // Per-adset volgers per dag chart
   const adsetNames = useMemo(() => {
@@ -126,37 +136,79 @@ function ReleaseCampaignCard({ campaign, adsetEntries, campaignDaily, from, to }
   const hasReleaseData = filteredDaily.length > 0
   const hasAny         = hasAdData || hasReleaseData
 
+  const { totalSpend, totalImpr, totalFollowers, totalStreams, totalPlaylists, avgCpm, avgCostPerFoll, avgResultRate } = stats
+
   return (
     <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
-      {/* Card header */}
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50/60 transition-colors text-left"
-      >
-        <div className="w-9 h-9 rounded-xl bg-[#3071d8]/10 flex items-center justify-center shrink-0">
-          <Music2 className="h-4.5 w-4.5 text-[#3071d8]" />
+      {/* Always-visible: name + all 8 metrics */}
+      <div className="px-5 pt-4 pb-3">
+        {/* Title row */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-[#3071d8]/10 flex items-center justify-center shrink-0">
+            <Music2 className="h-4 w-4 text-[#3071d8]" />
+          </div>
+          <p className="font-bold text-slate-800 flex-1">{campaign.name}</p>
+          {!hasAny && <span className="text-xs text-slate-300">Geen data voor deze periode</span>}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-800 truncate">{campaign.name}</p>
-          {hasAny ? (
-            <div className="flex flex-wrap gap-3 mt-1">
-              <span className="text-xs text-slate-400">€{totalSpend.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</span>
-              <span className="text-xs text-green-600">+{fmtNum(totalFollowers)} volgers</span>
-              {totalStreams > 0    && <span className="text-xs text-amber-500">{fmtNum(totalStreams)} streams</span>}
-              {totalPlaylists > 0 && <span className="text-xs text-purple-500">{fmtNum(totalPlaylists)} playlist saves</span>}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-300 mt-0.5">Geen data voor deze periode</p>
-          )}
-        </div>
-        {open ? <ChevronUp className="h-4 w-4 text-slate-300 shrink-0" /> : <ChevronDown className="h-4 w-4 text-slate-300 shrink-0" />}
-      </button>
 
-      {/* Expanded detail */}
-      {open && (
+        {/* Metric grid: 4 per row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Row 1: TikTok Ads metrics */}
+          <div className="bg-slate-50 rounded-xl p-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Spend</p>
+            <p className="text-base font-bold text-slate-800">{hasAdData ? fmtEur(totalSpend) : '—'}</p>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">CPM</p>
+            <p className="text-base font-bold text-slate-800">{avgCpm > 0 ? fmtEur(avgCpm) : '—'}</p>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Impressies</p>
+            <p className="text-base font-bold text-slate-800">{hasAdData ? fmtNum(totalImpr) : '—'}</p>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Volgers</p>
+            <p className="text-base font-bold text-slate-800">{hasAdData ? fmtNum(totalFollowers) : '—'}</p>
+          </div>
+          {/* Row 2: cost metrics + streams + playlists */}
+          <div className="bg-slate-50 rounded-xl p-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Kosten/volger</p>
+            <p className="text-base font-bold text-slate-800">{avgCostPerFoll > 0 ? fmtEur(avgCostPerFoll) : '—'}</p>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Resultaat %</p>
+            <p className="text-base font-bold text-slate-800">{avgResultRate > 0 ? fmtPct(avgResultRate) : '—'}</p>
+          </div>
+          <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
+            <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">Streams</p>
+            <p className="text-base font-bold text-slate-800">{hasReleaseData ? fmtNum(totalStreams) : '—'}</p>
+          </div>
+          <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+            <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1">Playlist saves</p>
+            <p className="text-base font-bold text-slate-800">{hasReleaseData ? fmtNum(totalPlaylists) : '—'}</p>
+          </div>
+        </div>
+
+        {/* Expand toggle */}
+        {hasAny && (
+          <button
+            onClick={() => setOpen(v => !v)}
+            className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-[#3071d8] transition-colors py-1"
+          >
+            {open ? (
+              <><ChevronUp className="h-3.5 w-3.5" /> Grafieken verbergen</>
+            ) : (
+              <><ChevronDown className="h-3.5 w-3.5" /> Grafieken bekijken</>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Expandable charts */}
+      {open && hasAny && (
         <div className="border-t border-slate-100 px-5 py-5 space-y-6">
           {/* Per ad set: volgers per dag */}
-          {adsetChartData.length > 0 && adsetList.length > 0 ? (
+          {adsetChartData.length > 0 && adsetList.length > 0 && (
             <div>
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Volgers per ad set per dag</h3>
               <ResponsiveContainer width="100%" height={200}>
@@ -183,9 +235,7 @@ function ReleaseCampaignCard({ campaign, adsetEntries, campaignDaily, from, to }
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          ) : hasAdData ? (
-            <p className="text-xs text-slate-400">Geen ad set data beschikbaar voor deze periode.</p>
-          ) : null}
+          )}
 
           {/* Streams + playlist saves per dag */}
           {releaseChartData.length > 0 && (
@@ -193,12 +243,6 @@ function ReleaseCampaignCard({ campaign, adsetEntries, campaignDaily, from, to }
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Streams &amp; playlist saves per dag</h3>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={releaseChartData} margin={{ top: 4, right: 40, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id={`gPlaylist-${campaign.id}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="datum" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                   <YAxis yAxisId="left"  tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => fmtNum(v)} />
@@ -214,16 +258,10 @@ function ReleaseCampaignCard({ campaign, adsetEntries, campaignDaily, from, to }
                   <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }}
                     formatter={(n: unknown) => n === 'streams' ? 'Streams' : 'Playlist saves'}
                   />
-                  <Bar         yAxisId="left"  dataKey="streams"       fill="#f59e0b" radius={[3,3,0,0]} />
-                  <Line        yAxisId="right" type="monotone" dataKey="playlist_saves" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                  <Bar  yAxisId="left"  dataKey="streams"        fill="#f59e0b" radius={[3,3,0,0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="playlist_saves" stroke="#8b5cf6" strokeWidth={2} dot={false} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
-          )}
-
-          {!hasAny && (
-            <div className="py-8 text-center">
-              <p className="text-slate-400 text-sm">Geen data voor deze periode. Voer cijfers in via <Link href="/dashboard/tiktok-ads/invoer" className="text-[#3071d8] underline">dagelijkse invoer</Link>.</p>
             </div>
           )}
         </div>
