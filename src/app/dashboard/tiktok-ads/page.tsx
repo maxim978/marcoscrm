@@ -1,104 +1,83 @@
-import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { TikTokAdsDashboard } from '@/components/tiktok-ads/TikTokAdsDashboard'
-import { getMockDashboardData } from '@/lib/tiktok-ads/mock'
 import { createClient } from '@/lib/supabase/server'
-import type { DashboardData, DailyMetric } from '@/lib/tiktok-ads/types'
+import { TikTokAdsDashboard } from '@/components/tiktok-ads/TikTokAdsDashboard'
 
-async function getRealDashboardData(): Promise<DashboardData> {
+export interface AdSetEntryRaw {
+  id: string
+  datum: string
+  adset_id: string
+  spend: number
+  cpm: number
+  impressions: number
+  followers: number
+  cost_per_follower: number
+  result_rate: number
+  adset: { name: string; campaign_name: string; campaign: { name: string } | null } | null
+}
+
+export interface StreamWeekRaw {
+  id: string
+  release_id: string
+  week_number: number
+  maandag: number; dinsdag: number; woensdag: number; donderdag: number
+  vrijdag: number; zaterdag: number; zondag: number
+  release: { title: string } | null
+}
+
+export interface PlaylistSaveRaw {
+  id: string
+  release_id: string
+  datum: string
+  aantal: number
+  release: { title: string } | null
+}
+
+export default async function TikTokAdsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Load structured adset entries (primary source)
-  const { data: adsetEntries } = await supabase
-    .from('tiktok_adset_entries')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('datum', { ascending: true })
-
-  // Load old-style manual entries (fallback for dates not in adset entries)
-  const { data: manualEntries } = await supabase
-    .from('tiktok_manual_entries')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('datum', { ascending: true })
-
-  // Aggregate adset entries by date
-  const byDate: Record<string, DailyMetric> = {}
-  for (const e of (adsetEntries ?? [])) {
-    if (!byDate[e.datum]) {
-      byDate[e.datum] = {
-        date: e.datum, spend: 0, impressions: 0, reach: 0, videoViews: 0,
-        clicks: 0, ctr: 0, cpm: 0, cpc: 0, profileVisits: 0,
-        followers: 0, likes: 0, comments: 0, shares: 0,
-      }
-    }
-    const d = byDate[e.datum]
-    d.spend       += e.spend       ?? 0
-    d.impressions += e.impressions ?? 0
-    d.followers   += e.followers   ?? 0
-  }
-
-  // Derive CPM and CPC from aggregated totals
-  const adsetMetrics: DailyMetric[] = Object.values(byDate).map(d => ({
-    ...d,
-    cpm: d.impressions > 0 ? (d.spend / d.impressions) * 1000 : 0,
-    cpc: 0,
-    ctr: 0,
-  })).sort((a, b) => a.date.localeCompare(b.date))
-
-  // Map old manual entries for dates not already covered
-  const adsetDates = new Set(adsetMetrics.map(m => m.date))
-  const manualMetrics: DailyMetric[] = (manualEntries ?? [])
-    .filter(e => !adsetDates.has(e.datum))
-    .map(e => ({
-      date: e.datum,
-      spend: e.spend ?? 0,
-      impressions: e.impressions ?? 0,
-      reach: e.reach ?? 0,
-      videoViews: e.video_views ?? 0,
-      clicks: e.clicks ?? 0,
-      ctr: e.ctr ?? 0,
-      cpm: e.cpm ?? 0,
-      cpc: e.cpc ?? 0,
-      profileVisits: e.profile_visits ?? 0,
-      followers: e.followers ?? 0,
-      likes: e.likes ?? 0,
-      comments: e.comments ?? 0,
-      shares: e.shares ?? 0,
-    }))
-
-  const dailyMetrics = [...adsetMetrics, ...manualMetrics]
-    .sort((a, b) => a.date.localeCompare(b.date))
-
-  return {
-    accounts: [{ id: 'manual', name: 'Handmatige invoer', currency: 'EUR', timezone: 'Europe/Amsterdam' }],
-    campaigns: [],
-    ads: [],
-    dailyMetrics,
-    audience: { byAge: [], byGender: [], byCountry: [], byDevice: [], byHour: [], byDayOfWeek: [] },
-    insights: [],
-    alerts: [],
-    goals: {},
-    syncLog: {
-      id: 'manual',
-      status: 'success',
-      completedAt: new Date().toISOString(),
-      recordsProcessed: dailyMetrics.length,
-    },
-  }
-}
-
-export default async function TikTokAdsPage() {
   const isMockMode = process.env.TIKTOK_ADS_MOCK_MODE !== 'false'
-  const data = isMockMode
-    ? getMockDashboardData()
-    : await getRealDashboardData()
+
+  // Load TikTok ad entries with adset + campaign names
+  const { data: rawAdsetEntries } = await supabase
+    .from('tiktok_adset_entries')
+    .select(`
+      id, datum, adset_id, spend, cpm, impressions, followers, cost_per_follower, result_rate,
+      adset:tiktok_adsets ( name, campaign_name, campaign:tiktok_manual_campaigns ( name ) )
+    `)
+    .eq('user_id', user.id)
+    .order('datum', { ascending: true })
+
+  // Load releases (RLS filters to this user)
+  const { data: releases } = await supabase
+    .from('releases')
+    .select('id, title')
+
+  const releaseIds = (releases ?? []).map((r: { id: string }) => r.id)
+
+  // Load streams + playlist saves for those releases
+  const [{ data: rawStreamWeeks }, { data: rawPlaylistSaves }] = await Promise.all([
+    releaseIds.length > 0
+      ? supabase.from('release_stream_weeks')
+          .select('id, release_id, week_number, maandag, dinsdag, woensdag, donderdag, vrijdag, zaterdag, zondag, release:releases(title)')
+          .in('release_id', releaseIds)
+          .order('week_number')
+      : Promise.resolve({ data: [] }),
+    releaseIds.length > 0
+      ? supabase.from('release_playlist_saves')
+          .select('id, release_id, datum, aantal, release:releases(title)')
+          .in('release_id', releaseIds)
+          .order('datum', { ascending: true })
+      : Promise.resolve({ data: [] }),
+  ])
 
   return (
-    <Suspense fallback={<div className="h-96 flex items-center justify-center text-slate-400">Laden...</div>}>
-      <TikTokAdsDashboard initialData={data} isMockMode={isMockMode} />
-    </Suspense>
+    <TikTokAdsDashboard
+      adsetEntries={(rawAdsetEntries ?? []) as unknown as AdSetEntryRaw[]}
+      streamWeeks={(rawStreamWeeks ?? []) as unknown as StreamWeekRaw[]}
+      playlistSaves={(rawPlaylistSaves ?? []) as unknown as PlaylistSaveRaw[]}
+      isMockMode={isMockMode}
+    />
   )
 }
