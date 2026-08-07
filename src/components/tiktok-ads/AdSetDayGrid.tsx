@@ -8,40 +8,51 @@ import type { AdSet, AdSetEntry } from '@/app/actions/tiktok-ads-structure'
 
 type InputKey = keyof Omit<AdSetEntry, 'id' | 'adset_id' | 'datum'>
 
-const FIELDS: { key: InputKey; label: string; prefix?: string; suffix?: string; step: string }[] = [
-  { key: 'spend',            label: 'Spend',               prefix: '€', step: '0.01' },
-  { key: 'cpm',              label: 'CPM',                 prefix: '€', step: '0.01' },
-  { key: 'impressions',      label: 'Impressies',                        step: '1'    },
-  { key: 'followers',        label: 'Volgers',                           step: '1'    },
-  { key: 'cost_per_follower',label: 'Kosten per volger',   prefix: '€', step: '0.01' },
-  { key: 'result_rate',      label: 'Resultaat %',         suffix: '%', step: '0.01' },
+const FIELDS: { key: InputKey; label: string; prefix?: string; suffix?: string }[] = [
+  { key: 'spend',             label: 'Spend',             prefix: '€' },
+  { key: 'cpm',               label: 'CPM',               prefix: '€' },
+  { key: 'impressions',       label: 'Impressies'                      },
+  { key: 'followers',         label: 'Volgers'                         },
+  { key: 'cost_per_follower', label: 'Kosten per volger', prefix: '€' },
+  { key: 'result_rate',       label: 'Resultaat %',       suffix: '%' },
 ]
+
+function parse(raw: string): number {
+  const n = parseFloat(raw.replace(',', '.'))
+  return isNaN(n) ? 0 : n
+}
 
 function empty(adset_id: string, datum: string): AdSetEntry {
   return { adset_id, datum, spend: 0, cpm: 0, impressions: 0, followers: 0, cost_per_follower: 0, result_rate: 0 }
 }
 
-function fmt(key: InputKey, val: number): string {
-  if (key === 'spend' || key === 'cpm' || key === 'cost_per_follower') {
-    return '€' + val.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+function entryToRaw(e: AdSetEntry): Record<InputKey, string> {
+  return {
+    spend:             e.spend             > 0 ? String(e.spend)             : '',
+    cpm:               e.cpm               > 0 ? String(e.cpm)               : '',
+    impressions:       e.impressions        > 0 ? String(e.impressions)       : '',
+    followers:         e.followers          > 0 ? String(e.followers)         : '',
+    cost_per_follower: e.cost_per_follower  > 0 ? String(e.cost_per_follower) : '',
+    result_rate:       e.result_rate        > 0 ? String(e.result_rate)       : '',
   }
-  if (key === 'result_rate') return val.toLocaleString('nl-NL', { maximumFractionDigits: 2 }) + '%'
+}
+
+function fmt(key: InputKey, val: number): string {
+  if (key === 'spend' || key === 'cpm' || key === 'cost_per_follower')
+    return '€' + val.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  if (key === 'result_rate')
+    return val.toLocaleString('nl-NL', { maximumFractionDigits: 2 }) + '%'
   return val.toLocaleString('nl-NL')
 }
 
 function totalFor(key: InputKey, adsets: AdSet[], values: Record<string, AdSetEntry>): string {
   const sum = (k: InputKey) => adsets.reduce((s, a) => s + ((values[a.id]?.[k] as number) ?? 0), 0)
-
   if (key === 'cpm') {
-    const totalSpend = sum('spend')
-    const totalImpr  = sum('impressions')
-    const v = totalImpr > 0 ? (totalSpend / totalImpr) * 1000 : 0
+    const v = sum('impressions') > 0 ? (sum('spend') / sum('impressions')) * 1000 : 0
     return '€' + v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
   if (key === 'cost_per_follower') {
-    const totalSpend = sum('spend')
-    const totalFoll  = sum('followers')
-    const v = totalFoll > 0 ? totalSpend / totalFoll : 0
+    const v = sum('followers') > 0 ? sum('spend') / sum('followers') : 0
     return '€' + v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
   if (key === 'result_rate') {
@@ -50,6 +61,70 @@ function totalFor(key: InputKey, adsets: AdSet[], values: Record<string, AdSetEn
   }
   return fmt(key, sum(key))
 }
+
+// --- DecimalInput ---
+// Stores raw string while typing; only parses on blur or Enter
+function DecimalInput({
+  value, onChange, prefix, suffix, placeholder = '0',
+}: {
+  value: number
+  onChange: (val: number) => void
+  prefix?: string
+  suffix?: string
+  placeholder?: string
+}) {
+  const [raw, setRaw] = useState(value > 0 ? String(value) : '')
+  const [focused, setFocused] = useState(false)
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setRaw(e.target.value)
+    const n = parseFloat(e.target.value.replace(',', '.'))
+    if (!isNaN(n)) onChange(n)
+    else if (e.target.value === '') onChange(0)
+  }
+
+  function handleBlur() {
+    setFocused(false)
+    const n = parse(raw)
+    onChange(n)
+    setRaw(n > 0 ? String(n) : '')
+  }
+
+  function handleFocus() {
+    setFocused(true)
+    if (!focused && value > 0) setRaw(String(value))
+  }
+
+  // When parent value changes externally (e.g. clear), sync unless focused
+  const display = focused ? raw : (value > 0 ? String(value) : '')
+
+  return (
+    <div className="relative">
+      {prefix && (
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
+          {prefix}
+        </span>
+      )}
+      {suffix && (
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
+          {suffix}
+        </span>
+      )}
+      <input
+        type="text"
+        inputMode="decimal"
+        value={display}
+        placeholder={placeholder}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        className={`w-full border border-slate-200 rounded-lg text-xs py-1.5 text-right focus:outline-none focus:border-[#3071d8]/50 bg-white ${prefix ? 'pl-6 pr-2' : suffix ? 'pl-2 pr-7' : 'px-2'}`}
+      />
+    </div>
+  )
+}
+
+// --- Main grid ---
 
 interface Props {
   datum: string
@@ -65,14 +140,13 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
   }, {})
 
   const [values, setValues] = useState(init)
-  const [saving, setSaving]   = useState(false)
+  const [saving, setSaving]     = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [saved, setSaved]     = useState(initialEntries.length > 0)
-  const [dirty, setDirty]     = useState(false)
+  const [saved, setSaved]       = useState(initialEntries.length > 0)
+  const [dirty, setDirty]       = useState(false)
 
-  function set(adset_id: string, key: InputKey, val: string) {
-    const num = parseFloat(val.replace(',', '.')) || 0
-    setValues(prev => ({ ...prev, [adset_id]: { ...prev[adset_id], [key]: num } }))
+  function set(adset_id: string, key: InputKey, val: number) {
+    setValues(prev => ({ ...prev, [adset_id]: { ...prev[adset_id], [key]: val } }))
     setDirty(true)
     setSaved(false)
   }
@@ -118,31 +192,17 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
             </tr>
           </thead>
           <tbody>
-            {FIELDS.map(({ key, label, prefix, suffix, step }) => (
+            {FIELDS.map(({ key, label, prefix, suffix }) => (
               <tr key={key} className="border-b border-slate-50 hover:bg-slate-50/40">
                 <td className="py-1.5 px-3 text-xs text-slate-500 font-medium whitespace-nowrap">{label}</td>
                 {adsets.map(a => (
                   <td key={a.id} className="py-1 px-2">
-                    <div className="relative">
-                      {prefix && (
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                          {prefix}
-                        </span>
-                      )}
-                      {suffix && (
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
-                          {suffix}
-                        </span>
-                      )}
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={(values[a.id]?.[key] as number) || ''}
-                        onChange={e => set(a.id, key, e.target.value)}
-                        placeholder="0"
-                        className={`w-full border border-slate-200 rounded-lg text-xs py-1.5 text-right focus:outline-none focus:border-[#3071d8]/50 bg-white ${prefix ? 'pl-6 pr-2' : suffix ? 'pl-2 pr-7' : 'px-2'}`}
-                      />
-                    </div>
+                    <DecimalInput
+                      value={(values[a.id]?.[key] as number) ?? 0}
+                      onChange={val => set(a.id, key, val)}
+                      prefix={prefix}
+                      suffix={suffix}
+                    />
                   </td>
                 ))}
                 {colCount > 1 && (
