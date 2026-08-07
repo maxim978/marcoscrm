@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { PenLine, TrendingUp, Calendar } from 'lucide-react'
+import { PenLine, TrendingUp, Calendar, ChevronDown, ChevronUp, Music2 } from 'lucide-react'
 import {
-  AreaChart, Area, BarChart, Bar,
+  AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import type { AdSetEntryRaw, StreamWeekRaw, PlaylistSaveRaw, ReleaseRaw } from '@/app/dashboard/tiktok-ads/page'
+import type { AdSetEntryRaw, CampaignRaw, CampaignDailyRaw } from '@/app/dashboard/tiktok-ads/page'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,20 +25,19 @@ function shortDate(d: string) {
 type QuickRange = '1d' | '3d' | '7d' | '14d' | '30d' | 'ytd' | 'all' | 'custom'
 
 const QUICK: { key: QuickRange; label: string }[] = [
-  { key: '1d',     label: 'Vandaag'  },
-  { key: '3d',     label: '3 dagen'  },
-  { key: '7d',     label: '7 dagen'  },
-  { key: '14d',    label: '14 dagen' },
-  { key: '30d',    label: '30 dagen' },
-  { key: 'ytd',    label: 'Dit jaar' },
-  { key: 'all',    label: 'Alles'    },
+  { key: '1d',     label: 'Vandaag'   },
+  { key: '3d',     label: '3 dagen'   },
+  { key: '7d',     label: '7 dagen'   },
+  { key: '14d',    label: '14 dagen'  },
+  { key: '30d',    label: '30 dagen'  },
+  { key: 'ytd',    label: 'Dit jaar'  },
+  { key: 'all',    label: 'Alles'     },
   { key: 'custom', label: 'Aangepast' },
 ]
 
 function quickBounds(q: QuickRange): { from: string | null; to: string | null } {
   const today = todayStr()
-  if (q === 'all')    return { from: null, to: null }
-  if (q === 'custom') return { from: null, to: null } // overridden by state
+  if (q === 'all' || q === 'custom') return { from: null, to: null }
   const d = new Date()
   if (q === '1d')  return { from: today, to: today }
   if (q === '3d')  { d.setDate(d.getDate() - 3);  return { from: d.toISOString().split('T')[0], to: today } }
@@ -49,11 +48,13 @@ function quickBounds(q: QuickRange): { from: string | null; to: string | null } 
   return { from: null, to: null }
 }
 
+const ADSET_COLORS = ['#3071d8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
+
 // ─── KPI card ─────────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className={`bg-white rounded-xl border p-4 ${accent ? `border-l-4 ${accent}` : 'border-slate-100'}`}>
+    <div className="bg-white rounded-xl border border-slate-100 p-4">
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
       <p className="text-xl font-bold text-slate-800 leading-none">{value}</p>
       {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
@@ -61,48 +62,197 @@ function KpiCard({ label, value, sub, accent }: { label: string; value: string; 
   )
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Release campaign card ─────────────────────────────────────────────────────
 
-// Compute the calendar date of a stream week's Monday
-// Uses release_date (or created_at) + (week_number - 1) * 7 days
-function weekStartDate(releaseMap: Record<string, string>, releaseId: string, weekNumber: number): string | null {
-  const base = releaseMap[releaseId]
-  if (!base) return null
-  const d = new Date(base + 'T12:00:00')
-  d.setDate(d.getDate() + (weekNumber - 1) * 7)
-  return d.toISOString().split('T')[0]
+interface ReleaseCampaignCardProps {
+  campaign: CampaignRaw
+  adsetEntries: AdSetEntryRaw[]
+  campaignDaily: CampaignDailyRaw[]
+  from: string | null
+  to: string | null
 }
+
+function ReleaseCampaignCard({ campaign, adsetEntries, campaignDaily, from, to }: ReleaseCampaignCardProps) {
+  const [open, setOpen] = useState(false)
+
+  function inRange(datum: string) {
+    if (from && datum < from) return false
+    if (to   && datum > to)   return false
+    return true
+  }
+
+  const filteredEntries = useMemo(() => adsetEntries.filter(e => inRange(e.datum)), [adsetEntries, from, to])
+  const filteredDaily   = useMemo(() => campaignDaily.filter(d => inRange(d.datum)), [campaignDaily, from, to])
+
+  // Summary stats
+  const totalSpend     = filteredEntries.reduce((s, e) => s + (e.spend     ?? 0), 0)
+  const totalFollowers = filteredEntries.reduce((s, e) => s + (e.followers ?? 0), 0)
+  const totalStreams    = filteredDaily.reduce((s, d) => s + (d.streams        ?? 0), 0)
+  const totalPlaylists = filteredDaily.reduce((s, d) => s + (d.playlist_saves ?? 0), 0)
+
+  // Per-adset volgers per dag chart
+  const adsetNames = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const e of adsetEntries) {
+      if (e.adset && !seen.has(e.adset_id)) seen.set(e.adset_id, e.adset.name)
+    }
+    return seen
+  }, [adsetEntries])
+
+  const adsetChartData = useMemo(() => {
+    const byDate: Record<string, Record<string, number>> = {}
+    for (const e of filteredEntries) {
+      if (!byDate[e.datum]) byDate[e.datum] = {}
+      const name = adsetNames.get(e.adset_id) ?? e.adset_id
+      byDate[e.datum][name] = (byDate[e.datum][name] ?? 0) + (e.followers ?? 0)
+    }
+    return Object.entries(byDate).sort(([a],[b]) => a.localeCompare(b))
+      .map(([d, v]) => ({ datum: shortDate(d), ...v }))
+  }, [filteredEntries, adsetNames])
+
+  const adsetList = useMemo(() => Array.from(adsetNames.values()), [adsetNames])
+
+  // Streams + playlist saves per dag chart
+  const releaseChartData = useMemo(() => {
+    const byDate: Record<string, { streams: number; playlist_saves: number }> = {}
+    for (const d of filteredDaily) {
+      byDate[d.datum] = { streams: d.streams ?? 0, playlist_saves: d.playlist_saves ?? 0 }
+    }
+    return Object.entries(byDate).sort(([a],[b]) => a.localeCompare(b))
+      .map(([d, v]) => ({ datum: shortDate(d), ...v }))
+  }, [filteredDaily])
+
+  const hasAdData      = filteredEntries.length > 0
+  const hasReleaseData = filteredDaily.length > 0
+  const hasAny         = hasAdData || hasReleaseData
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
+      {/* Card header */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50/60 transition-colors text-left"
+      >
+        <div className="w-9 h-9 rounded-xl bg-[#3071d8]/10 flex items-center justify-center shrink-0">
+          <Music2 className="h-4.5 w-4.5 text-[#3071d8]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-slate-800 truncate">{campaign.name}</p>
+          {hasAny ? (
+            <div className="flex flex-wrap gap-3 mt-1">
+              <span className="text-xs text-slate-400">€{totalSpend.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</span>
+              <span className="text-xs text-green-600">+{fmtNum(totalFollowers)} volgers</span>
+              {totalStreams > 0    && <span className="text-xs text-amber-500">{fmtNum(totalStreams)} streams</span>}
+              {totalPlaylists > 0 && <span className="text-xs text-purple-500">{fmtNum(totalPlaylists)} playlist saves</span>}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-300 mt-0.5">Geen data voor deze periode</p>
+          )}
+        </div>
+        {open ? <ChevronUp className="h-4 w-4 text-slate-300 shrink-0" /> : <ChevronDown className="h-4 w-4 text-slate-300 shrink-0" />}
+      </button>
+
+      {/* Expanded detail */}
+      {open && (
+        <div className="border-t border-slate-100 px-5 py-5 space-y-6">
+          {/* Per ad set: volgers per dag */}
+          {adsetChartData.length > 0 && adsetList.length > 0 ? (
+            <div>
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Volgers per ad set per dag</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={adsetChartData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="datum" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => fmtNum(v)} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+                    formatter={(val: unknown, name: unknown) => [fmtNum(Number(val)), String(name)]}
+                  />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
+                  {adsetList.map((name, i) => (
+                    <Line
+                      key={name}
+                      type="monotone"
+                      dataKey={name}
+                      stroke={ADSET_COLORS[i % ADSET_COLORS.length]}
+                      strokeWidth={2}
+                      dot={false}
+                      connectNulls
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : hasAdData ? (
+            <p className="text-xs text-slate-400">Geen ad set data beschikbaar voor deze periode.</p>
+          ) : null}
+
+          {/* Streams + playlist saves per dag */}
+          {releaseChartData.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Streams &amp; playlist saves per dag</h3>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={releaseChartData} margin={{ top: 4, right: 40, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id={`gPlaylist-${campaign.id}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="datum" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left"  tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => fmtNum(v)} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+                    formatter={(val: unknown, name: unknown) =>
+                      name === 'streams'
+                        ? [fmtNum(Number(val)), 'Streams']
+                        : [fmtNum(Number(val)), 'Playlist saves']
+                    }
+                  />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }}
+                    formatter={(n: unknown) => n === 'streams' ? 'Streams' : 'Playlist saves'}
+                  />
+                  <Bar         yAxisId="left"  dataKey="streams"       fill="#f59e0b" radius={[3,3,0,0]} />
+                  <Line        yAxisId="right" type="monotone" dataKey="playlist_saves" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {!hasAny && (
+            <div className="py-8 text-center">
+              <p className="text-slate-400 text-sm">Geen data voor deze periode. Voer cijfers in via <Link href="/dashboard/tiktok-ads/invoer" className="text-[#3071d8] underline">dagelijkse invoer</Link>.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   adsetEntries: AdSetEntryRaw[]
-  streamWeeks: StreamWeekRaw[]
-  playlistSaves: PlaylistSaveRaw[]
-  releases: ReleaseRaw[]
+  campaigns: CampaignRaw[]
+  campaignDaily: CampaignDailyRaw[]
   isMockMode: boolean
 }
 
-export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, releases, isMockMode }: Props) {
-  // Build map: release_id → base date (release_date or created_at)
-  const releaseMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const r of releases) {
-      m[r.id] = r.release_date ?? r.created_at.split('T')[0]
-    }
-    return m
-  }, [releases])
+export function TikTokAdsDashboard({ adsetEntries, campaigns, campaignDaily, isMockMode }: Props) {
   const [quick, setQuick]           = useState<QuickRange>('30d')
   const [customFrom, setCustomFrom] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0]
   })
   const [customTo, setCustomTo]     = useState(todayStr)
 
-  // Resolve the active from/to bounds
   const bounds = useMemo(() => {
     if (quick === 'custom') return { from: customFrom || null, to: customTo || null }
     return quickBounds(quick)
   }, [quick, customFrom, customTo])
 
-  // Filter helper
   function inRange(datum: string) {
     if (bounds.from && datum < bounds.from) return false
     if (bounds.to   && datum > bounds.to)   return false
@@ -110,45 +260,22 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, r
   }
 
   const filteredEntries = useMemo(() => adsetEntries.filter(e => inRange(e.datum)), [adsetEntries, bounds])
-  const filteredSaves   = useMemo(() => playlistSaves.filter(s => inRange(s.datum)), [playlistSaves, bounds])
 
-  // Filter stream weeks by computed calendar date of their Monday
-  const filteredStreamWeeks = useMemo(() => streamWeeks.filter(w => {
-    const d = weekStartDate(releaseMap, w.release_id, w.week_number)
-    if (!d) return true // no date known → include
-    return inRange(d)
-  }), [streamWeeks, releaseMap, bounds])
-
-  // ── Ads KPIs ──
+  // ── Ads KPIs (all campaigns combined) ──
   const kpi = useMemo(() => {
-    const totalSpend     = filteredEntries.reduce((s, e) => s + (e.spend ?? 0), 0)
+    const totalSpend     = filteredEntries.reduce((s, e) => s + (e.spend     ?? 0), 0)
     const totalImpr      = filteredEntries.reduce((s, e) => s + (e.impressions ?? 0), 0)
-    const totalFollowers = filteredEntries.reduce((s, e) => s + (e.followers ?? 0), 0)
+    const totalFollowers = filteredEntries.reduce((s, e) => s + (e.followers  ?? 0), 0)
     const rates          = filteredEntries.map(e => e.result_rate ?? 0).filter(r => r > 0)
     return {
-      totalSpend,
-      totalImpr,
-      totalFollowers,
-      avgCpm:         totalImpr      > 0 ? (totalSpend / totalImpr) * 1000       : 0,
-      avgCostPerFoll: totalFollowers > 0 ? totalSpend / totalFollowers            : 0,
+      totalSpend, totalImpr, totalFollowers,
+      avgCpm:         totalImpr      > 0 ? (totalSpend / totalImpr) * 1000        : 0,
+      avgCostPerFoll: totalFollowers > 0 ? totalSpend / totalFollowers             : 0,
       avgResultRate:  rates.length   > 0 ? rates.reduce((a, b) => a + b) / rates.length : 0,
     }
   }, [filteredEntries])
 
-  // ── Streams KPI (filtered by computed calendar date) ──
-  const streamsTotal = useMemo(() => {
-    const DAYS = ['maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'] as const
-    return filteredStreamWeeks.reduce((sum, w) => sum + DAYS.reduce((s, d) => s + (w[d] ?? 0), 0), 0)
-  }, [filteredStreamWeeks])
-
-  // ── Playlist saves KPI (latest cumulative per release in period, summed) ──
-  const playlistKpi = useMemo(() => {
-    const latest: Record<string, number> = {}
-    for (const s of filteredSaves) latest[s.release_id] = s.aantal // ascending → last wins
-    return Object.values(latest).reduce((sum, n) => sum + n, 0)
-  }, [filteredSaves])
-
-  // ── Performance chart ──
+  // ── Overall performance chart (spend + volgers per dag, all campaigns) ──
   const performanceData = useMemo(() => {
     const byDate: Record<string, { spend: number; followers: number }> = {}
     for (const e of filteredEntries) {
@@ -160,47 +287,26 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, r
       .map(([d, v]) => ({ datum: shortDate(d), ...v }))
   }, [filteredEntries])
 
-  // ── Campaign breakdown ──
-  const campaignRows = useMemo(() => {
-    const camps: Record<string, { name: string; spend: number; impressions: number; followers: number; rates: number[] }> = {}
-    for (const e of filteredEntries) {
-      const name = (e.adset as any)?.campaign?.name ?? (e.adset as any)?.campaign_name ?? 'Overig'
-      if (!camps[name]) camps[name] = { name, spend: 0, impressions: 0, followers: 0, rates: [] }
-      camps[name].spend       += e.spend       ?? 0
-      camps[name].impressions += e.impressions ?? 0
-      camps[name].followers   += e.followers   ?? 0
-      if (e.result_rate > 0) camps[name].rates.push(e.result_rate)
+  // ── Per-campaign lookups ──
+  const entriesByCampaign = useMemo(() => {
+    const map: Record<string, AdSetEntryRaw[]> = {}
+    for (const e of adsetEntries) {
+      const cid = e.adset?.campaign_id
+      if (!cid) continue
+      if (!map[cid]) map[cid] = []
+      map[cid].push(e)
     }
-    return Object.values(camps).map(c => ({
-      ...c,
-      cpm:            c.impressions > 0 ? (c.spend / c.impressions) * 1000 : 0,
-      costPerFollower:c.followers   > 0 ? c.spend / c.followers            : 0,
-      avgResultRate:  c.rates.length > 0 ? c.rates.reduce((a,b) => a+b) / c.rates.length : 0,
-    })).sort((a,b) => b.spend - a.spend)
-  }, [filteredEntries])
+    return map
+  }, [adsetEntries])
 
-  // ── Streams chart (filtered, with computed date label if available) ──
-  const streamData = useMemo(() => {
-    const DAYS = ['maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'] as const
-    const byKey: Record<string, { label: string; streams: number; sortKey: string }> = {}
-    for (const w of filteredStreamWeeks) {
-      const d = weekStartDate(releaseMap, w.release_id, w.week_number)
-      const key = d ?? `wk-${w.week_number}`
-      const label = d ? shortDate(d) : `Wk ${w.week_number}`
-      if (!byKey[key]) byKey[key] = { label, streams: 0, sortKey: d ?? `0000-${String(w.week_number).padStart(4,'0')}` }
-      byKey[key].streams += DAYS.reduce((s, day) => s + (w[day] ?? 0), 0)
+  const dailyByCampaign = useMemo(() => {
+    const map: Record<string, CampaignDailyRaw[]> = {}
+    for (const d of campaignDaily) {
+      if (!map[d.campaign_id]) map[d.campaign_id] = []
+      map[d.campaign_id].push(d)
     }
-    return Object.values(byKey).sort((a,b) => a.sortKey.localeCompare(b.sortKey))
-      .map(({ label, streams }) => ({ week: label, streams }))
-  }, [filteredStreamWeeks, releaseMap])
-
-  // ── Playlist chart ──
-  const playlistData = useMemo(() => {
-    const byDate: Record<string, number> = {}
-    for (const s of filteredSaves) byDate[s.datum] = (byDate[s.datum] ?? 0) + s.aantal
-    return Object.entries(byDate).sort(([a],[b]) => a.localeCompare(b))
-      .map(([d, saves]) => ({ datum: shortDate(d), saves }))
-  }, [filteredSaves])
+    return map
+  }, [campaignDaily])
 
   const hasData = filteredEntries.length > 0
 
@@ -222,7 +328,7 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, r
             </div>
             <div>
               <h1 className="text-xl font-bold">TikTok Ads Dashboard</h1>
-              <p className="text-white/60 text-sm mt-0.5">Performance overzicht van je advertentiecampagnes</p>
+              <p className="text-white/60 text-sm mt-0.5">Performance overzicht per release</p>
             </div>
           </div>
           <Link
@@ -248,8 +354,6 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, r
           <Calendar className="h-4 w-4 text-slate-400" />
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Periode</span>
         </div>
-
-        {/* Quick buttons */}
         <div className="flex flex-wrap gap-2">
           {QUICK.map(({ key, label }) => (
             <button
@@ -265,8 +369,6 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, r
             </button>
           ))}
         </div>
-
-        {/* Custom date pickers */}
         {quick === 'custom' && (
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <div className="flex items-center gap-2">
@@ -290,162 +392,80 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, r
               />
             </div>
             {bounds.from && bounds.to && (
-              <span className="text-xs text-slate-400">
-                {shortDate(bounds.from)} — {shortDate(bounds.to)}
-              </span>
+              <span className="text-xs text-slate-400">{shortDate(bounds.from)} — {shortDate(bounds.to)}</span>
             )}
           </div>
         )}
       </div>
 
-      {/* ── All KPI cards in one row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        {/* TikTok Ads KPIs */}
+      {/* ── 6 TikTok KPI cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <KpiCard label="Spend"         value={fmtEur(kpi.totalSpend)} />
         <KpiCard label="CPM"           value={kpi.avgCpm > 0 ? fmtEur(kpi.avgCpm) : '—'} sub="gewogen gem." />
         <KpiCard label="Impressies"    value={fmtNum(kpi.totalImpr)} />
         <KpiCard label="Volgers"       value={fmtNum(kpi.totalFollowers)} />
         <KpiCard label="Kosten/volger" value={kpi.avgCostPerFoll > 0 ? fmtEur(kpi.avgCostPerFoll) : '—'} sub="gewogen gem." />
         <KpiCard label="Resultaat %"   value={kpi.avgResultRate > 0 ? fmtPct(kpi.avgResultRate) : '—'} sub="gemiddelde" />
-        {/* Content KPIs */}
-        <KpiCard
-          label="Streams"
-          value={fmtNum(streamsTotal)}
-          sub="alle releases · periode"
-          accent="border-l-amber-400"
-        />
-        <KpiCard
-          label="Playlist saves"
-          value={fmtNum(playlistKpi)}
-          sub="cumulatief in periode"
-          accent="border-l-purple-400"
-        />
       </div>
 
-      {!hasData ? (
-        <div className="bg-white border border-dashed border-slate-200 rounded-2xl py-20 text-center">
-          <TrendingUp className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-400 font-medium">Geen TikTok Ads data voor deze periode</p>
-          <p className="text-slate-300 text-sm mt-1">Voer cijfers in via de knop rechtsboven</p>
-        </div>
-      ) : (
-        <>
-          {/* Performance chart */}
-          {performanceData.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 p-5">
-              <h2 className="text-sm font-bold text-slate-700 mb-4">Spend &amp; Volgers per dag</h2>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={performanceData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#3071d8" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#3071d8" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gFoll" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#10b981" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="datum" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <YAxis yAxisId="left"  tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => '€'+v} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
-                    formatter={(val: unknown, name: unknown) =>
-                      name === 'spend'
-                        ? ['€' + Number(val).toLocaleString('nl-NL', { minimumFractionDigits: 2 }), 'Spend']
-                        : [Number(val).toLocaleString('nl-NL'), 'Volgers']
-                    }
-                  />
-                  <Legend formatter={n => n === 'spend' ? 'Spend' : 'Volgers'} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                  <Area yAxisId="left"  type="monotone" dataKey="spend"     stroke="#3071d8" strokeWidth={2} fill="url(#gSpend)" dot={false} />
-                  <Area yAxisId="right" type="monotone" dataKey="followers" stroke="#10b981" strokeWidth={2} fill="url(#gFoll)"  dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Campaign breakdown */}
-          {campaignRows.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 p-5">
-              <h2 className="text-sm font-bold text-slate-700 mb-4">Per campagne</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[640px]">
-                  <thead>
-                    <tr className="border-b border-slate-100">
-                      {['Campagne','Spend','CPM','Impressies','Volgers','Kosten/volger','Resultaat%'].map(h => (
-                        <th key={h} className="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {campaignRows.map(c => (
-                      <tr key={c.name} className="hover:bg-slate-50/50">
-                        <td className="py-2.5 px-3 font-semibold text-slate-800">{c.name}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{fmtEur(c.spend)}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{c.cpm > 0 ? fmtEur(c.cpm) : '—'}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{fmtNum(c.impressions)}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{fmtNum(c.followers)}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{c.costPerFollower > 0 ? fmtEur(c.costPerFollower) : '—'}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{c.avgResultRate > 0 ? fmtPct(c.avgResultRate) : '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Streams chart (all-time) */}
-      {streamData.length > 0 && (
+      {/* ── Overall performance chart ── */}
+      {hasData && performanceData.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-bold text-slate-700">Streams per week</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Alle releases · gefilterd op geselecteerde periode</p>
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={streamData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => v.toLocaleString('nl-NL')} />
-              <Tooltip
-                contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
-                formatter={(val: unknown) => [Number(val).toLocaleString('nl-NL'), 'Streams']}
-              />
-              <Bar dataKey="streams" fill="#f59e0b" radius={[4,4,0,0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Playlist saves chart (filtered) */}
-      {playlistData.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <h2 className="text-sm font-bold text-slate-700 mb-1">Playlist toevoegingen</h2>
-          <p className="text-xs text-slate-400 mb-4">Alle releases · gefilterd op geselecteerde periode</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={playlistData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+          <h2 className="text-sm font-bold text-slate-700 mb-4">Spend &amp; Volgers per dag — alle campagnes</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={performanceData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
               <defs>
-                <linearGradient id="gPlaylist" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#3071d8" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#3071d8" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gFoll" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#10b981" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="datum" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="left"  tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => '€'+v} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
-                formatter={(val: unknown) => [Number(val).toLocaleString('nl-NL'), 'Toevoegingen']}
+                formatter={(val: unknown, name: unknown) =>
+                  name === 'spend'
+                    ? ['€' + Number(val).toLocaleString('nl-NL', { minimumFractionDigits: 2 }), 'Spend']
+                    : [Number(val).toLocaleString('nl-NL'), 'Volgers']
+                }
               />
-              <Area type="monotone" dataKey="saves" stroke="#8b5cf6" strokeWidth={2} fill="url(#gPlaylist)" dot={false} />
+              <Legend formatter={(n: unknown) => n === 'spend' ? 'Spend' : 'Volgers'} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
+              <Area yAxisId="left"  type="monotone" dataKey="spend"     stroke="#3071d8" strokeWidth={2} fill="url(#gSpend)" dot={false} />
+              <Area yAxisId="right" type="monotone" dataKey="followers" stroke="#10b981" strokeWidth={2} fill="url(#gFoll)"  dot={false} />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ── Release cards ── */}
+      {campaigns.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold text-slate-700">Releases</h2>
+          {campaigns.map(campaign => (
+            <ReleaseCampaignCard
+              key={campaign.id}
+              campaign={campaign}
+              adsetEntries={entriesByCampaign[campaign.id] ?? []}
+              campaignDaily={dailyByCampaign[campaign.id] ?? []}
+              from={bounds.from}
+              to={bounds.to}
+            />
+          ))}
+        </div>
+      )}
+
+      {!hasData && campaigns.length === 0 && (
+        <div className="bg-white border border-dashed border-slate-200 rounded-2xl py-20 text-center">
+          <TrendingUp className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-400 font-medium">Geen data voor deze periode</p>
+          <p className="text-slate-300 text-sm mt-1">Maak eerst een campagne aan via de invoerpagina</p>
         </div>
       )}
     </div>

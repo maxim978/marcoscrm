@@ -12,31 +12,27 @@ export interface AdSetEntryRaw {
   followers: number
   cost_per_follower: number
   result_rate: number
-  adset: { name: string; campaign_name: string; campaign: { name: string } | null } | null
+  adset: {
+    id: string
+    name: string
+    campaign_id: string
+    campaign_name: string
+    campaign: { id: string; name: string } | null
+  } | null
 }
 
-export interface ReleaseRaw {
+export interface CampaignRaw {
   id: string
-  title: string
-  release_date: string | null
+  name: string
   created_at: string
 }
 
-export interface StreamWeekRaw {
+export interface CampaignDailyRaw {
   id: string
-  release_id: string
-  week_number: number
-  maandag: number; dinsdag: number; woensdag: number; donderdag: number
-  vrijdag: number; zaterdag: number; zondag: number
-  release: { title: string } | null
-}
-
-export interface PlaylistSaveRaw {
-  id: string
-  release_id: string
+  campaign_id: string
   datum: string
-  aantal: number
-  release: { title: string } | null
+  streams: number
+  playlist_saves: number
 }
 
 export default async function TikTokAdsPage() {
@@ -46,45 +42,32 @@ export default async function TikTokAdsPage() {
 
   const isMockMode = process.env.TIKTOK_ADS_MOCK_MODE !== 'false'
 
-  // Load TikTok ad entries with adset + campaign names
-  const { data: rawAdsetEntries } = await supabase
-    .from('tiktok_adset_entries')
-    .select(`
-      id, datum, adset_id, spend, cpm, impressions, followers, cost_per_follower, result_rate,
-      adset:tiktok_adsets ( name, campaign_name, campaign:tiktok_manual_campaigns ( name ) )
-    `)
-    .eq('user_id', user.id)
-    .order('datum', { ascending: true })
-
-  // Load releases with dates (RLS filters to this user)
-  const { data: releases } = await supabase
-    .from('releases')
-    .select('id, title, release_date, created_at')
-
-  const releaseIds = (releases ?? []).map((r: { id: string }) => r.id)
-
-  // Load streams + playlist saves for those releases
-  const [{ data: rawStreamWeeks }, { data: rawPlaylistSaves }] = await Promise.all([
-    releaseIds.length > 0
-      ? supabase.from('release_stream_weeks')
-          .select('id, release_id, week_number, maandag, dinsdag, woensdag, donderdag, vrijdag, zaterdag, zondag, release:releases(title)')
-          .in('release_id', releaseIds)
-          .order('week_number')
-      : Promise.resolve({ data: [] }),
-    releaseIds.length > 0
-      ? supabase.from('release_playlist_saves')
-          .select('id, release_id, datum, aantal, release:releases(title)')
-          .in('release_id', releaseIds)
-          .order('datum', { ascending: true })
-      : Promise.resolve({ data: [] }),
+  const [{ data: rawAdsetEntries }, { data: campaigns }, { data: campaignDaily }] = await Promise.all([
+    supabase
+      .from('tiktok_adset_entries')
+      .select(`
+        id, datum, adset_id, spend, cpm, impressions, followers, cost_per_follower, result_rate,
+        adset:tiktok_adsets ( id, name, campaign_id, campaign_name, campaign:tiktok_manual_campaigns ( id, name ) )
+      `)
+      .eq('user_id', user.id)
+      .order('datum', { ascending: true }),
+    supabase
+      .from('tiktok_manual_campaigns')
+      .select('id, name, created_at')
+      .eq('user_id', user.id)
+      .order('created_at'),
+    supabase
+      .from('tiktok_campaign_daily')
+      .select('id, campaign_id, datum, streams, playlist_saves')
+      .eq('user_id', user.id)
+      .order('datum', { ascending: true }),
   ])
 
   return (
     <TikTokAdsDashboard
       adsetEntries={(rawAdsetEntries ?? []) as unknown as AdSetEntryRaw[]}
-      streamWeeks={(rawStreamWeeks ?? []) as unknown as StreamWeekRaw[]}
-      playlistSaves={(rawPlaylistSaves ?? []) as unknown as PlaylistSaveRaw[]}
-      releases={(releases ?? []) as unknown as ReleaseRaw[]}
+      campaigns={(campaigns ?? []) as CampaignRaw[]}
+      campaignDaily={(campaignDaily ?? []) as CampaignDailyRaw[]}
       isMockMode={isMockMode}
     />
   )

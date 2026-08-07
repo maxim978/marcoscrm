@@ -3,17 +3,18 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, LayoutGrid } from 'lucide-react'
 import { StructuredEntry } from '@/components/tiktok-ads/StructuredEntry'
-import type { Campaign, AdSet, AdSetEntry } from '@/app/actions/tiktok-ads-structure'
+import type { Campaign, AdSet, AdSetEntry, CampaignDailyEntry } from '@/app/actions/tiktok-ads-structure'
 
 export default async function TikTokAdsInvoerPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: campaigns }, { data: adsets }, { data: entries }] = await Promise.all([
+  const [{ data: campaigns }, { data: adsets }, { data: entries }, { data: campaignDaily }] = await Promise.all([
     supabase.from('tiktok_manual_campaigns').select('*').eq('user_id', user.id).order('created_at'),
     supabase.from('tiktok_adsets').select('*').eq('user_id', user.id).order('order_num'),
     supabase.from('tiktok_adset_entries').select('*').eq('user_id', user.id).order('datum', { ascending: false }),
+    supabase.from('tiktok_campaign_daily').select('*').eq('user_id', user.id).order('datum', { ascending: false }),
   ])
 
   // Group adsets by campaign_id
@@ -29,6 +30,13 @@ export default async function TikTokAdsInvoerPage() {
   for (const entry of (entries ?? [])) {
     if (!entriesByAdSet[entry.adset_id]) entriesByAdSet[entry.adset_id] = []
     entriesByAdSet[entry.adset_id].push(entry as AdSetEntry)
+  }
+
+  // Group campaign daily by campaign_id → datum
+  const campaignDailyByCampaign: Record<string, Record<string, CampaignDailyEntry>> = {}
+  for (const daily of (campaignDaily ?? [])) {
+    if (!campaignDailyByCampaign[daily.campaign_id]) campaignDailyByCampaign[daily.campaign_id] = {}
+    campaignDailyByCampaign[daily.campaign_id][daily.datum] = daily as CampaignDailyEntry
   }
 
   return (
@@ -47,7 +55,7 @@ export default async function TikTokAdsInvoerPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Dagelijkse invoer</h1>
             <p className="text-slate-500 text-sm">
-              Beheer campagnes en vul dagelijks de cijfers per ad set in.
+              Vul per campagne (liedje) dagelijks de advertentiecijfers, streams en playlist toevoegingen in.
             </p>
           </div>
         </div>
@@ -57,6 +65,7 @@ export default async function TikTokAdsInvoerPage() {
         campaigns={(campaigns ?? []) as Campaign[]}
         adsetsByCampaign={adsetsByCampaign}
         entriesByAdSet={entriesByAdSet}
+        campaignDailyByCampaign={campaignDailyByCampaign}
       />
     </div>
   )

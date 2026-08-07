@@ -10,12 +10,13 @@ import { AdSetDayGrid } from './AdSetDayGrid'
 import {
   createCampaign, renameCampaign, deleteCampaign,
 } from '@/app/actions/tiktok-ads-structure'
-import type { Campaign, AdSet, AdSetEntry } from '@/app/actions/tiktok-ads-structure'
+import type { Campaign, AdSet, AdSetEntry, CampaignDailyEntry } from '@/app/actions/tiktok-ads-structure'
 
 interface Props {
   campaigns: Campaign[]
   adsetsByCampaign: Record<string, AdSet[]>
   entriesByAdSet: Record<string, AdSetEntry[]>
+  campaignDailyByCampaign: Record<string, Record<string, CampaignDailyEntry>>
 }
 
 function today() {
@@ -26,11 +27,13 @@ function CampaignBlock({
   campaign,
   adsets: initialAdsets,
   allEntries,
+  campaignDailyByDate: initialDailyByDate,
   onDeleted,
 }: {
   campaign: Campaign
   adsets: AdSet[]
   allEntries: Record<string, AdSetEntry[]>
+  campaignDailyByDate: Record<string, CampaignDailyEntry>
   onDeleted: (id: string) => void
 }) {
   const [adsets, setAdsets] = useState(initialAdsets)
@@ -45,29 +48,32 @@ function CampaignBlock({
     return byDate
   })
 
-  const [dates, setDates] = useState<string[]>(() =>
-    Object.keys(
-      (() => {
-        const byDate: Record<string, boolean> = {}
-        for (const adset of initialAdsets) {
-          for (const entry of (allEntries[adset.id] ?? [])) {
-            byDate[entry.datum] = true
-          }
-        }
-        return byDate
-      })()
-    ).sort((a, b) => b.localeCompare(a))
-  )
+  // Collect all known dates (from adset entries OR campaign daily entries)
+  const [dates, setDates] = useState<string[]>(() => {
+    const known: Record<string, boolean> = {}
+    for (const adset of initialAdsets) {
+      for (const entry of (allEntries[adset.id] ?? [])) {
+        known[entry.datum] = true
+      }
+    }
+    for (const datum of Object.keys(initialDailyByDate)) {
+      known[datum] = true
+    }
+    return Object.keys(known).sort((a, b) => b.localeCompare(a))
+  })
 
-  const [openDate, setOpenDate] = useState<string | null>(null)
-  const [newDate, setNewDate] = useState(today())
-  const [expanded, setExpanded] = useState(true)
+  const [openDate, setOpenDate]       = useState<string | null>(null)
+  const [newDate, setNewDate]         = useState(today())
+  const [expanded, setExpanded]       = useState(true)
   const [editingName, setEditingName] = useState(false)
-  const [nameVal, setNameVal] = useState(campaign.name)
+  const [nameVal, setNameVal]         = useState(campaign.name)
   const [renamingSaving, setRenamingSaving] = useState(false)
-  const [showSetup, setShowSetup] = useState(adsets.length === 0)
+  const [showSetup, setShowSetup]     = useState(adsets.length === 0)
   const [deletingCampaign, setDeletingCampaign] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmDelete, setConfirmDelete]       = useState(false)
+
+  // Track campaign daily by date (mutable when user adds days)
+  const [campaignDailyByDate, setCampaignDailyByDate] = useState(initialDailyByDate)
 
   async function handleRename() {
     setRenamingSaving(true)
@@ -91,10 +97,12 @@ function CampaignBlock({
   function removeDate(datum: string) {
     setDates(prev => prev.filter(d => d !== datum))
     setEntriesByDate(prev => { const n = { ...prev }; delete n[datum]; return n })
+    setCampaignDailyByDate(prev => { const n = { ...prev }; delete n[datum]; return n })
   }
 
-  const totalSpend = Object.values(entriesByDate).flat().reduce((s, e) => s + (e.spend ?? 0), 0)
+  const totalSpend     = Object.values(entriesByDate).flat().reduce((s, e) => s + (e.spend ?? 0), 0)
   const totalFollowers = Object.values(entriesByDate).flat().reduce((s, e) => s + (e.followers ?? 0), 0)
+  const totalStreams    = Object.values(campaignDailyByDate).reduce((s, d) => s + (d.streams ?? 0), 0)
 
   return (
     <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
@@ -135,9 +143,10 @@ function CampaignBlock({
 
         {/* Summary */}
         {dates.length > 0 && !editingName && (
-          <div className="hidden sm:flex items-center gap-3 text-sm shrink-0">
+          <div className="hidden sm:flex items-center gap-3 text-xs shrink-0">
             <span className="text-slate-400">€{totalSpend.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</span>
             <span className="text-green-600">+{totalFollowers.toLocaleString('nl-NL')} volgers</span>
+            {totalStreams > 0 && <span className="text-amber-500">{totalStreams.toLocaleString('nl-NL')} streams</span>}
           </div>
         )}
 
@@ -216,10 +225,12 @@ function CampaignBlock({
               ) : (
                 <div className="space-y-2">
                   {dates.map(datum => {
-                    const isOpen = openDate === datum
+                    const isOpen  = openDate === datum
                     const entries = entriesByDate[datum] ?? []
-                    const totalSpend = entries.reduce((s, e) => s + (e.spend ?? 0), 0)
-                    const totalFollowers = entries.reduce((s, e) => s + (e.followers ?? 0), 0)
+                    const daily   = campaignDailyByDate[datum]
+                    const daySpend     = entries.reduce((s, e) => s + (e.spend     ?? 0), 0)
+                    const dayFollowers = entries.reduce((s, e) => s + (e.followers ?? 0), 0)
+                    const dayStreams    = daily?.streams ?? 0
 
                     return (
                       <div key={datum} className="border border-slate-100 rounded-xl overflow-hidden">
@@ -233,10 +244,11 @@ function CampaignBlock({
                                 weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
                               })}
                             </span>
-                            {entries.length > 0 ? (
+                            {(entries.length > 0 || daily) ? (
                               <>
-                                <span className="text-xs text-slate-400">€{totalSpend.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</span>
-                                <span className="text-xs text-green-600">+{totalFollowers} volgers</span>
+                                <span className="text-xs text-slate-400">€{daySpend.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-xs text-green-600">+{dayFollowers} volgers</span>
+                                {dayStreams > 0 && <span className="text-xs text-amber-500">{dayStreams.toLocaleString('nl-NL')} streams</span>}
                               </>
                             ) : (
                               <span className="text-xs bg-amber-50 text-amber-500 font-semibold px-2 py-0.5 rounded-full border border-amber-200">Niet ingevuld</span>
@@ -251,6 +263,8 @@ function CampaignBlock({
                               datum={datum}
                               adsets={adsets}
                               initialEntries={entries}
+                              campaignId={campaign.id}
+                              initialCampaignDaily={daily}
                               onDelete={removeDate}
                             />
                           </div>
@@ -268,11 +282,11 @@ function CampaignBlock({
   )
 }
 
-export function StructuredEntry({ campaigns: initialCampaigns, adsetsByCampaign, entriesByAdSet }: Props) {
+export function StructuredEntry({ campaigns: initialCampaigns, adsetsByCampaign, entriesByAdSet, campaignDailyByCampaign }: Props) {
   const [campaigns, setCampaigns] = useState(initialCampaigns)
-  const [creating, setCreating] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [creating, setCreating]   = useState(false)
+  const [newName, setNewName]     = useState('')
+  const [saving, setSaving]       = useState(false)
 
   async function handleCreate() {
     if (!newName.trim()) return
@@ -314,7 +328,7 @@ export function StructuredEntry({ campaigns: initialCampaigns, adsetsByCampaign,
               value={newName}
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false) }}
-              placeholder="Campagnenaam"
+              placeholder="Naam van het liedje / campagne"
               autoFocus
               className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3071d8]/40"
             />
@@ -326,7 +340,7 @@ export function StructuredEntry({ campaigns: initialCampaigns, adsetsByCampaign,
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-xs text-slate-400">Na het aanmaken stel je de ad sets in voor deze campagne.</p>
+          <p className="text-xs text-slate-400">Gebruik de naam van het liedje. Na het aanmaken stel je de ad sets in.</p>
         </div>
       )}
 
@@ -343,6 +357,7 @@ export function StructuredEntry({ campaigns: initialCampaigns, adsetsByCampaign,
               campaign={campaign}
               adsets={adsetsByCampaign[campaign.id] ?? []}
               allEntries={entriesByAdSet}
+              campaignDailyByDate={campaignDailyByCampaign[campaign.id] ?? {}}
               onDeleted={removeCampaign}
             />
           ))}

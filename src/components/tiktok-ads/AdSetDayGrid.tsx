@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import { Loader2, Save, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { upsertAdSetEntry, deleteAdSetEntriesByDate } from '@/app/actions/tiktok-ads-structure'
-import type { AdSet, AdSetEntry } from '@/app/actions/tiktok-ads-structure'
+import {
+  upsertAdSetEntry, deleteAdSetEntriesByDate,
+  upsertCampaignDaily, deleteCampaignDailyByDate,
+} from '@/app/actions/tiktok-ads-structure'
+import type { AdSet, AdSetEntry, CampaignDailyEntry } from '@/app/actions/tiktok-ads-structure'
 
 type InputKey = keyof Omit<AdSetEntry, 'id' | 'adset_id' | 'datum'>
 
@@ -24,17 +27,6 @@ function parse(raw: string): number {
 
 function empty(adset_id: string, datum: string): AdSetEntry {
   return { adset_id, datum, spend: 0, cpm: 0, impressions: 0, followers: 0, cost_per_follower: 0, result_rate: 0 }
-}
-
-function entryToRaw(e: AdSetEntry): Record<InputKey, string> {
-  return {
-    spend:             e.spend             > 0 ? String(e.spend)             : '',
-    cpm:               e.cpm               > 0 ? String(e.cpm)               : '',
-    impressions:       e.impressions        > 0 ? String(e.impressions)       : '',
-    followers:         e.followers          > 0 ? String(e.followers)         : '',
-    cost_per_follower: e.cost_per_follower  > 0 ? String(e.cost_per_follower) : '',
-    result_rate:       e.result_rate        > 0 ? String(e.result_rate)       : '',
-  }
 }
 
 function fmt(key: InputKey, val: number): string {
@@ -62,8 +54,7 @@ function totalFor(key: InputKey, adsets: AdSet[], values: Record<string, AdSetEn
   return fmt(key, sum(key))
 }
 
-// --- DecimalInput ---
-// Stores raw string while typing; only parses on blur or Enter
+// Stores raw string while typing; only parses on blur
 function DecimalInput({
   value, onChange, prefix, suffix, placeholder = '0',
 }: {
@@ -95,7 +86,6 @@ function DecimalInput({
     if (!focused && value > 0) setRaw(String(value))
   }
 
-  // When parent value changes externally (e.g. clear), sync unless focused
   const display = focused ? raw : (value > 0 ? String(value) : '')
 
   return (
@@ -130,23 +120,35 @@ interface Props {
   datum: string
   adsets: AdSet[]
   initialEntries: AdSetEntry[]
+  campaignId: string
+  initialCampaignDaily?: CampaignDailyEntry
   onDelete: (datum: string) => void
 }
 
-export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props) {
+export function AdSetDayGrid({ datum, adsets, initialEntries, campaignId, initialCampaignDaily, onDelete }: Props) {
   const init = adsets.reduce<Record<string, AdSetEntry>>((acc, a) => {
     acc[a.id] = initialEntries.find(e => e.adset_id === a.id) ?? empty(a.id, datum)
     return acc
   }, {})
 
-  const [values, setValues] = useState(init)
+  const [values, setValues]           = useState(init)
+  const [campaignValues, setCampaignValues] = useState<{ streams: number; playlist_saves: number }>({
+    streams:       initialCampaignDaily?.streams       ?? 0,
+    playlist_saves: initialCampaignDaily?.playlist_saves ?? 0,
+  })
   const [saving, setSaving]     = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [saved, setSaved]       = useState(initialEntries.length > 0)
+  const [saved, setSaved]       = useState(initialEntries.length > 0 || !!initialCampaignDaily)
   const [dirty, setDirty]       = useState(false)
 
   function set(adset_id: string, key: InputKey, val: number) {
     setValues(prev => ({ ...prev, [adset_id]: { ...prev[adset_id], [key]: val } }))
+    setDirty(true)
+    setSaved(false)
+  }
+
+  function setCampaign(key: 'streams' | 'playlist_saves', val: number) {
+    setCampaignValues(prev => ({ ...prev, [key]: Math.round(val) }))
     setDirty(true)
     setSaved(false)
   }
@@ -156,6 +158,12 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
     for (const adset of adsets) {
       await upsertAdSetEntry({ ...values[adset.id], datum })
     }
+    await upsertCampaignDaily({
+      campaign_id: campaignId,
+      datum,
+      streams:       campaignValues.streams,
+      playlist_saves: campaignValues.playlist_saves,
+    })
     setSaving(false)
     setSaved(true)
     setDirty(false)
@@ -164,6 +172,7 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
   async function handleDelete() {
     setDeleting(true)
     await deleteAdSetEntriesByDate(datum, adsets.map(a => a.id))
+    await deleteCampaignDailyByDate(campaignId, datum)
     onDelete(datum)
   }
 
@@ -214,6 +223,29 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Campaign-level: streams + playlist saves */}
+      <div className="mt-4 pt-4 border-t border-slate-100">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Liedjescijfers</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-slate-500 block mb-1.5">Streams</label>
+            <DecimalInput
+              value={campaignValues.streams}
+              onChange={v => setCampaign('streams', v)}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500 block mb-1.5">Playlist toevoegingen</label>
+            <DecimalInput
+              value={campaignValues.playlist_saves}
+              onChange={v => setCampaign('playlist_saves', v)}
+              placeholder="0"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">

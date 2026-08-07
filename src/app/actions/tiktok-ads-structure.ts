@@ -171,3 +171,56 @@ export async function deleteAdSetEntriesByDate(datum: string, adset_ids: string[
   revalidatePath('/dashboard/tiktok-ads')
   return {}
 }
+
+// --- Campaign daily (streams + playlist saves per campaign per day) ---
+
+export interface CampaignDailyEntry {
+  id?: string
+  campaign_id: string
+  datum: string
+  streams: number
+  playlist_saves: number
+}
+
+export async function upsertCampaignDaily(entry: CampaignDailyEntry): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Niet ingelogd' }
+
+  const { error } = await supabase
+    .from('tiktok_campaign_daily')
+    .upsert(
+      {
+        user_id: user.id,
+        campaign_id: entry.campaign_id,
+        datum: entry.datum,
+        streams: entry.streams,
+        playlist_saves: entry.playlist_saves,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'campaign_id,datum' }
+    )
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/tiktok-ads/invoer')
+  revalidatePath('/dashboard/tiktok-ads')
+  return {}
+}
+
+export async function deleteCampaignDailyByDate(campaign_id: string, datum: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Niet ingelogd' }
+
+  const { error } = await supabase
+    .from('tiktok_campaign_daily')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('campaign_id', campaign_id)
+    .eq('datum', datum)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/tiktok-ads/invoer')
+  revalidatePath('/dashboard/tiktok-ads')
+  return {}
+}
