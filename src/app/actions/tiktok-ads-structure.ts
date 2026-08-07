@@ -22,15 +22,11 @@ export interface AdSetEntry {
   adset_id: string
   datum: string
   spend: number
+  cpm: number
   impressions: number
-  reach: number
-  video_views: number
-  clicks: number
-  profile_visits: number
   followers: number
-  likes: number
-  comments: number
-  shares: number
+  cost_per_follower: number
+  result_rate: number
 }
 
 // --- Campaigns ---
@@ -143,15 +139,11 @@ export async function upsertAdSetEntry(entry: AdSetEntry): Promise<{ error?: str
         adset_id: entry.adset_id,
         datum: entry.datum,
         spend: entry.spend,
+        cpm: entry.cpm,
         impressions: entry.impressions,
-        reach: entry.reach,
-        video_views: entry.video_views,
-        clicks: entry.clicks,
-        profile_visits: entry.profile_visits,
         followers: entry.followers,
-        likes: entry.likes,
-        comments: entry.comments,
-        shares: entry.shares,
+        cost_per_follower: entry.cost_per_follower,
+        result_rate: entry.result_rate,
       },
       { onConflict: 'adset_id,datum' }
     )

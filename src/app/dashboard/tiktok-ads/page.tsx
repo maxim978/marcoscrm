@@ -35,24 +35,17 @@ async function getRealDashboardData(): Promise<DashboardData> {
       }
     }
     const d = byDate[e.datum]
-    d.spend       += e.spend        ?? 0
-    d.impressions += e.impressions  ?? 0
-    d.reach       += e.reach        ?? 0
-    d.videoViews  += e.video_views  ?? 0
-    d.clicks      += e.clicks       ?? 0
-    d.profileVisits += e.profile_visits ?? 0
-    d.followers   += e.followers    ?? 0
-    d.likes       += e.likes        ?? 0
-    d.comments    += e.comments     ?? 0
-    d.shares      += e.shares       ?? 0
+    d.spend       += e.spend       ?? 0
+    d.impressions += e.impressions ?? 0
+    d.followers   += e.followers   ?? 0
   }
 
-  // Compute derived metrics for adset entries
+  // Derive CPM and CPC from aggregated totals
   const adsetMetrics: DailyMetric[] = Object.values(byDate).map(d => ({
     ...d,
-    ctr: d.impressions > 0 ? (d.clicks / d.impressions) * 100 : 0,
     cpm: d.impressions > 0 ? (d.spend / d.impressions) * 1000 : 0,
-    cpc: d.clicks > 0 ? d.spend / d.clicks : 0,
+    cpc: 0,
+    ctr: 0,
   })).sort((a, b) => a.date.localeCompare(b.date))
 
   // Map old manual entries for dates not already covered
