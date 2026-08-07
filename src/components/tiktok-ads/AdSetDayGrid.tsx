@@ -71,7 +71,7 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
   const [dirty, setDirty]     = useState(false)
 
   function set(adset_id: string, key: InputKey, val: string) {
-    const num = parseFloat(val) || 0
+    const num = parseFloat(val.replace(',', '.')) || 0
     setValues(prev => ({ ...prev, [adset_id]: { ...prev[adset_id], [key]: num } }))
     setDirty(true)
     setSaved(false)
@@ -135,9 +135,8 @@ export function AdSetDayGrid({ datum, adsets, initialEntries, onDelete }: Props)
                         </span>
                       )}
                       <input
-                        type="number"
-                        min="0"
-                        step={step}
+                        type="text"
+                        inputMode="decimal"
                         value={(values[a.id]?.[key] as number) || ''}
                         onChange={e => set(a.id, key, e.target.value)}
                         placeholder="0"
