@@ -15,6 +15,13 @@ export interface AdSetEntryRaw {
   adset: { name: string; campaign_name: string; campaign: { name: string } | null } | null
 }
 
+export interface ReleaseRaw {
+  id: string
+  title: string
+  release_date: string | null
+  created_at: string
+}
+
 export interface StreamWeekRaw {
   id: string
   release_id: string
@@ -49,10 +56,10 @@ export default async function TikTokAdsPage() {
     .eq('user_id', user.id)
     .order('datum', { ascending: true })
 
-  // Load releases (RLS filters to this user)
+  // Load releases with dates (RLS filters to this user)
   const { data: releases } = await supabase
     .from('releases')
-    .select('id, title')
+    .select('id, title, release_date, created_at')
 
   const releaseIds = (releases ?? []).map((r: { id: string }) => r.id)
 
@@ -77,6 +84,7 @@ export default async function TikTokAdsPage() {
       adsetEntries={(rawAdsetEntries ?? []) as unknown as AdSetEntryRaw[]}
       streamWeeks={(rawStreamWeeks ?? []) as unknown as StreamWeekRaw[]}
       playlistSaves={(rawPlaylistSaves ?? []) as unknown as PlaylistSaveRaw[]}
+      releases={(releases ?? []) as unknown as ReleaseRaw[]}
       isMockMode={isMockMode}
     />
   )

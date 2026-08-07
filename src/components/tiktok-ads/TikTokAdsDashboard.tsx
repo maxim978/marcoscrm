@@ -7,7 +7,7 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import type { AdSetEntryRaw, StreamWeekRaw, PlaylistSaveRaw } from '@/app/dashboard/tiktok-ads/page'
+import type { AdSetEntryRaw, StreamWeekRaw, PlaylistSaveRaw, ReleaseRaw } from '@/app/dashboard/tiktok-ads/page'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -63,14 +63,33 @@ function KpiCard({ label, value, sub, accent }: { label: string; value: string; 
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// Compute the calendar date of a stream week's Monday
+// Uses release_date (or created_at) + (week_number - 1) * 7 days
+function weekStartDate(releaseMap: Record<string, string>, releaseId: string, weekNumber: number): string | null {
+  const base = releaseMap[releaseId]
+  if (!base) return null
+  const d = new Date(base + 'T12:00:00')
+  d.setDate(d.getDate() + (weekNumber - 1) * 7)
+  return d.toISOString().split('T')[0]
+}
+
 interface Props {
   adsetEntries: AdSetEntryRaw[]
   streamWeeks: StreamWeekRaw[]
   playlistSaves: PlaylistSaveRaw[]
+  releases: ReleaseRaw[]
   isMockMode: boolean
 }
 
-export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, isMockMode }: Props) {
+export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, releases, isMockMode }: Props) {
+  // Build map: release_id → base date (release_date or created_at)
+  const releaseMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const r of releases) {
+      m[r.id] = r.release_date ?? r.created_at.split('T')[0]
+    }
+    return m
+  }, [releases])
   const [quick, setQuick]           = useState<QuickRange>('30d')
   const [customFrom, setCustomFrom] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0]
@@ -93,6 +112,13 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, i
   const filteredEntries = useMemo(() => adsetEntries.filter(e => inRange(e.datum)), [adsetEntries, bounds])
   const filteredSaves   = useMemo(() => playlistSaves.filter(s => inRange(s.datum)), [playlistSaves, bounds])
 
+  // Filter stream weeks by computed calendar date of their Monday
+  const filteredStreamWeeks = useMemo(() => streamWeeks.filter(w => {
+    const d = weekStartDate(releaseMap, w.release_id, w.week_number)
+    if (!d) return true // no date known → include
+    return inRange(d)
+  }), [streamWeeks, releaseMap, bounds])
+
   // ── Ads KPIs ──
   const kpi = useMemo(() => {
     const totalSpend     = filteredEntries.reduce((s, e) => s + (e.spend ?? 0), 0)
@@ -109,11 +135,11 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, i
     }
   }, [filteredEntries])
 
-  // ── Streams KPI (all-time sum, week data has no calendar date) ──
+  // ── Streams KPI (filtered by computed calendar date) ──
   const streamsTotal = useMemo(() => {
     const DAYS = ['maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'] as const
-    return streamWeeks.reduce((sum, w) => sum + DAYS.reduce((s, d) => s + (w[d] ?? 0), 0), 0)
-  }, [streamWeeks])
+    return filteredStreamWeeks.reduce((sum, w) => sum + DAYS.reduce((s, d) => s + (w[d] ?? 0), 0), 0)
+  }, [filteredStreamWeeks])
 
   // ── Playlist saves KPI (latest cumulative per release in period, summed) ──
   const playlistKpi = useMemo(() => {
@@ -153,14 +179,20 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, i
     })).sort((a,b) => b.spend - a.spend)
   }, [filteredEntries])
 
-  // ── Streams chart ──
+  // ── Streams chart (filtered, with computed date label if available) ──
   const streamData = useMemo(() => {
     const DAYS = ['maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'] as const
-    const byWeek: Record<number, number> = {}
-    for (const w of streamWeeks) byWeek[w.week_number] = (byWeek[w.week_number] ?? 0) + DAYS.reduce((s,d) => s+(w[d]??0),0)
-    return Object.entries(byWeek).sort(([a],[b]) => Number(a)-Number(b))
-      .map(([wk,streams]) => ({ week: `Wk ${wk}`, streams }))
-  }, [streamWeeks])
+    const byKey: Record<string, { label: string; streams: number; sortKey: string }> = {}
+    for (const w of filteredStreamWeeks) {
+      const d = weekStartDate(releaseMap, w.release_id, w.week_number)
+      const key = d ?? `wk-${w.week_number}`
+      const label = d ? shortDate(d) : `Wk ${w.week_number}`
+      if (!byKey[key]) byKey[key] = { label, streams: 0, sortKey: d ?? `0000-${String(w.week_number).padStart(4,'0')}` }
+      byKey[key].streams += DAYS.reduce((s, day) => s + (w[day] ?? 0), 0)
+    }
+    return Object.values(byKey).sort((a,b) => a.sortKey.localeCompare(b.sortKey))
+      .map(({ label, streams }) => ({ week: label, streams }))
+  }, [filteredStreamWeeks, releaseMap])
 
   // ── Playlist chart ──
   const playlistData = useMemo(() => {
@@ -279,7 +311,7 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, i
         <KpiCard
           label="Streams"
           value={fmtNum(streamsTotal)}
-          sub="alle releases · all-time"
+          sub="alle releases · periode"
           accent="border-l-amber-400"
         />
         <KpiCard
@@ -373,7 +405,7 @@ export function TikTokAdsDashboard({ adsetEntries, streamWeeks, playlistSaves, i
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-sm font-bold text-slate-700">Streams per week</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Alle releases · all-time (weeknummers hebben geen kalenderdatum)</p>
+              <p className="text-xs text-slate-400 mt-0.5">Alle releases · gefilterd op geselecteerde periode</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={200}>
