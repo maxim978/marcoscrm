@@ -49,17 +49,14 @@ export default async function TikTokAdsPage() {
         id, datum, adset_id, spend, cpm, impressions, followers, cost_per_follower, result_rate,
         adset:tiktok_adsets ( id, name, campaign_id, campaign_name, campaign:tiktok_manual_campaigns ( id, name ) )
       `)
-      .eq('user_id', user.id)
       .order('datum', { ascending: true }),
     supabase
       .from('tiktok_manual_campaigns')
       .select('id, name, created_at')
-      .eq('user_id', user.id)
       .order('created_at'),
     supabase
       .from('tiktok_campaign_daily')
       .select('id, campaign_id, datum, streams, playlist_saves')
-      .eq('user_id', user.id)
       .order('datum', { ascending: true }),
   ])
 
