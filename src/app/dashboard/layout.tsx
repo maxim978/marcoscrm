@@ -16,13 +16,22 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('products')
+    .eq('id', user.id)
+    .single()
+
+  const products = (profile?.products ?? {}) as { salesmachine?: boolean }
+  const hasSalesmachine = products.salesmachine === true
+
   return (
     <div className="flex flex-col md:flex-row bg-slate-50 min-h-screen md:h-screen md:overflow-hidden">
       {/* Mobile Header */}
       <div className="md:hidden bg-[#3071d8] border-b border-white/10 px-5 flex items-center sticky top-0 z-40 h-16 flex-shrink-0">
         <img src="/images/Logo-Marco-Kraats-2024-omlijnd (1).png" alt="Marco Kraats Logo" className="h-10 w-auto" />
       </div>
-      <MobileNav user={user} />
+      <MobileNav user={user} hasSalesmachine={hasSalesmachine} />
 
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#3071d8] text-white flex-col flex-shrink-0 overflow-y-auto shadow-xl">

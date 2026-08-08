@@ -27,6 +27,15 @@ export default async function SalesmachineLayout({
 
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('products')
+    .eq('id', user.id)
+    .single()
+
+  const products = (profile?.products ?? {}) as { salesmachine?: boolean }
+  if (products.salesmachine !== true) redirect('/dashboard')
+
   const { data: projects } = await supabase
     .from('sm_projects')
     .select('id, name')

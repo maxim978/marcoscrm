@@ -16,7 +16,7 @@ const BOTTOM_TABS = [
   { href: '/dashboard/djs', icon: Music, label: "DJ's" },
 ]
 
-const ALL_NAV = [
+const BASE_NAV = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/artists', icon: Users, label: 'Artists' },
   { href: '/dashboard/releases', icon: Disc, label: 'Releases' },
@@ -29,10 +29,12 @@ const ALL_NAV = [
   { href: '/dashboard/spotify', icon: Search, label: 'Spotify Finder' },
   { href: '/dashboard/tiktok', icon: Video, label: 'TikTok Sound Tracker' },
   { href: '/dashboard/tiktok-ads', icon: BarChart2, label: 'TikTok Ads' },
-  { href: '/salesmachine', icon: Zap, label: 'Salesmachine' },
 ]
 
-export function MobileNav({ user }: { user: any }) {
+export function MobileNav({ user, hasSalesmachine }: { user: any; hasSalesmachine: boolean }) {
+  const ALL_NAV = hasSalesmachine
+    ? [...BASE_NAV, { href: '/salesmachine', icon: Zap, label: 'Salesmachine' }]
+    : BASE_NAV
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
 
