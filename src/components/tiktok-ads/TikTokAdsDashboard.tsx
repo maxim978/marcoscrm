@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { PenLine, TrendingUp, Calendar, ChevronDown, ChevronUp, Music2 } from 'lucide-react'
+import { ShareLinkWidget } from './ShareLinkWidget'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -277,9 +278,11 @@ interface Props {
   campaigns: CampaignRaw[]
   campaignDaily: CampaignDailyRaw[]
   isMockMode: boolean
+  shareToken?: string | null
+  shareView?: boolean
 }
 
-export function TikTokAdsDashboard({ adsetEntries, campaigns, campaignDaily, isMockMode }: Props) {
+export function TikTokAdsDashboard({ adsetEntries, campaigns, campaignDaily, isMockMode, shareToken = null, shareView = false }: Props) {
   const [quick, setQuick]           = useState<QuickRange>('30d')
   const [customFrom, setCustomFrom] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0]
@@ -369,12 +372,17 @@ export function TikTokAdsDashboard({ adsetEntries, campaigns, campaignDaily, isM
               <p className="text-white/60 text-sm mt-0.5">Performance overzicht per release</p>
             </div>
           </div>
-          <Link
-            href="/dashboard/tiktok-ads/invoer"
-            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-colors shrink-0"
-          >
-            <PenLine className="h-4 w-4" /> Cijfers invoeren
-          </Link>
+          {!shareView && (
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <Link
+                href="/dashboard/tiktok-ads/invoer"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-colors"
+              >
+                <PenLine className="h-4 w-4" /> Cijfers invoeren
+              </Link>
+              <ShareLinkWidget initialToken={shareToken} />
+            </div>
+          )}
         </div>
       </div>
 

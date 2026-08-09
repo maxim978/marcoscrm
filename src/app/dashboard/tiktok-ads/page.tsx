@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { TikTokAdsDashboard } from '@/components/tiktok-ads/TikTokAdsDashboard'
+import { getShareLink } from '@/app/actions/share-link'
 
 export interface AdSetEntryRaw {
   id: string
@@ -42,7 +43,9 @@ export default async function TikTokAdsPage() {
 
   const isMockMode = process.env.TIKTOK_ADS_MOCK_MODE !== 'false'
 
-  const [{ data: rawAdsetEntries }, { data: campaigns }, { data: campaignDaily }] = await Promise.all([
+  const [shareToken, [{ data: rawAdsetEntries }, { data: campaigns }, { data: campaignDaily }]] = await Promise.all([
+    getShareLink(),
+    Promise.all([
     supabase
       .from('tiktok_adset_entries')
       .select(`
@@ -58,10 +61,12 @@ export default async function TikTokAdsPage() {
       .from('tiktok_campaign_daily')
       .select('id, campaign_id, datum, streams, playlist_saves')
       .order('datum', { ascending: true }),
+    ]),
   ])
 
   return (
     <TikTokAdsDashboard
+      shareToken={shareToken}
       adsetEntries={(rawAdsetEntries ?? []) as unknown as AdSetEntryRaw[]}
       campaigns={(campaigns ?? []) as CampaignRaw[]}
       campaignDaily={(campaignDaily ?? []) as CampaignDailyRaw[]}
